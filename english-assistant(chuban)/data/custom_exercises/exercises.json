@@ -1,0 +1,193 @@
+{
+  "exercise_sets": {
+    "demo-001": {
+      "id": "demo-001",
+      "name": "演示练习集",
+      "description": "这是一个演示用的练习集，包含语音和语法练习",
+      "type": "mixed",
+      "created_at": "2025-01-01T00:00:00",
+      "items": [
+        {
+          "id": "item-001",
+          "type": "speech",
+          "content": {
+            "text": "Hello, welcome to the custom exercise system!",
+            "phonetic": "həˈloʊ, ˈwɛlkəm tu ðə ˈkʌstəm ˈɛksərˌsaɪz ˈsɪstəm",
+            "audio_path": ""
+          },
+          "difficulty": "easy",
+          "tags": [
+            "greeting",
+            "introduction"
+          ],
+          "created_at": "2025-01-01T00:00:00"
+        },
+        {
+          "id": "item-002",
+          "type": "grammar",
+          "content": {
+            "chinese": "我每天早上都喝咖啡",
+            "english": "I drink coffee every morning",
+            "explanation": "表示习惯性动作，使用一般现在时"
+          },
+          "difficulty": "medium",
+          "tags": [
+            "present_tense",
+            "habit"
+          ],
+          "created_at": "2025-01-01T00:00:00"
+        }
+      ],
+      "stats": {
+        "total_items": 2,
+        "completed_count": 0,
+        "average_score": 0
+      }
+    },
+    "24685fd4-ea61-45fe-90f1-9f0b623e44f2": {
+      "id": "24685fd4-ea61-45fe-90f1-9f0b623e44f2",
+      "name": "文本练习_2025/10/12",
+      "description": "从文本创建",
+      "type": "mixed",
+      "created_at": "2025-10-12T16:28:22.463361",
+      "items": [
+        {
+          "type": "speech",
+          "content": {
+            "text": "The pursuit of knowledge and innovation drives human progress.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [],
+          "id": "72dab8ca-ba52-462a-b973-fadd320b8669",
+          "created_at": "2025-10-12T16:28:22.463361"
+        },
+        {
+          "type": "phoneme",
+          "content": {
+            "text": "The pursuit of knowledge and innovation drives human progress.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [
+            "phoneme_analysis"
+          ],
+          "id": "c08b9cbc-fa8b-478b-afd2-35ab4f6bc5bc",
+          "created_at": "2025-10-12T16:28:22.463361"
+        }
+      ],
+      "stats": {
+        "total_items": 2,
+        "completed_count": 0,
+        "average_score": 0
+      }
+    },
+    "aae5d518-0b8e-44c2-aded-58296a24c7cb": {
+      "id": "aae5d518-0b8e-44c2-aded-58296a24c7cb",
+      "name": "666",
+      "description": "",
+      "type": "mixed",
+      "created_at": "2025-10-12T17:22:26.246353",
+      "items": [],
+      "stats": {
+        "total_items": 0,
+        "completed_count": 0,
+        "average_score": 0
+      }
+    },
+    "535d3aff-1c5a-4712-9678-04de097ffc4e": {
+      "id": "535d3aff-1c5a-4712-9678-04de097ffc4e",
+      "name": "781",
+      "description": "从文本创建",
+      "type": "mixed",
+      "created_at": "2025-10-12T17:37:33.557928",
+      "items": [
+        {
+          "type": "speech",
+          "content": {
+            "text": "Looking into your past is the only way to discover your future.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [],
+          "id": "e947f6fc-bdbb-43db-890e-e809ae646b54",
+          "created_at": "2025-10-12T17:37:33.561108"
+        },
+        {
+          "type": "phoneme",
+          "content": {
+            "text": "Looking into your past is the only way to discover your future.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [
+            "phoneme_analysis"
+          ],
+          "id": "976c60eb-7809-43fe-a5c3-431997fbb274",
+          "created_at": "2025-10-12T17:37:33.561108"
+        },
+        {
+          "type": "speech",
+          "content": {
+            "text": "When you only have one life, that's what makes it special.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [],
+          "id": "03b015cc-5375-4a06-bf16-b44803c70da2",
+          "created_at": "2025-10-12T17:37:33.561108"
+        },
+        {
+          "type": "phoneme",
+          "content": {
+            "text": "When you only have one life, that's what makes it special.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [
+            "phoneme_analysis"
+          ],
+          "id": "1e983fa6-bb5f-4e56-9c7a-a17a0d1f6fc5",
+          "created_at": "2025-10-12T17:37:33.561108"
+        },
+        {
+          "type": "speech",
+          "content": {
+            "text": "You could be happy in your warm winter coat.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [],
+          "id": "6b486200-cc32-4c9f-9be3-0652699b6852",
+          "created_at": "2025-10-12T17:37:33.561108"
+        },
+        {
+          "type": "phoneme",
+          "content": {
+            "text": "You could be happy in your warm winter coat.",
+            "audio_path": "",
+            "phonetic": ""
+          },
+          "difficulty": "medium",
+          "tags": [
+            "phoneme_analysis"
+          ],
+          "id": "2445a41c-f4e4-4895-b6cd-a90cc3aa2470",
+          "created_at": "2025-10-12T17:37:33.561108"
+        }
+      ],
+      "stats": {
+        "total_items": 6,
+        "completed_count": 0,
+        "average_score": 0
+      }
+    }
+  }
+}

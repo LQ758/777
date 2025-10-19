@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 英语学习助手</title>
+    <script src="https://unpkg.com/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            min-height: 500px;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px 30px;
+        }
+
+        .form-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .form-content {
+            display: none;
+        }
+
+        .form-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .form-group input.error {
+            border-color: #e74c3c;
+            background: #fff5f5;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .form-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 10px;
+                min-height: auto;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+            
+            .login-header {
+                padding: 25px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="login-container">
+        <div class="login-header">
+            <h1>英语学习助手</h1>
+            <p>开始您的英语学习之旅</p>
+        </div>
+        
+        <div class="form-container">
+            <div class="form-tabs">
+                <button class="tab-button active" onclick="switchTab('login')">登录</button>
+                <button class="tab-button" onclick="switchTab('register')">注册</button>
+            </div>
+            
+            <!-- 登录表单 -->
+            <div id="login-form" class="form-content active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-username">用户名</label>
+                        <input type="text" id="login-username" name="username" required>
+                        <div class="error-message" id="login-username-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">密码</label>
+                        <div class="password-container">
+                            <input type="password" id="login-password" name="password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('login-password')">显示</button>
+                        </div>
+                        <div class="error-message" id="login-password-error"></div>
+                    </div>
+                    
+                    <button type="submit" class="submit-button" id="login-submit">登录</button>
+                </form>
+                
+                <div class="form-footer">
+                    <a href="#" onclick="switchTab('register')">还没有账号？立即注册</a>
+                </div>
+            </div>
+            
+            <!-- 注册表单 -->
+            <div id="register-form" class="form-content">
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="register-username">用户名</label>
+                        <input type="text" id="register-username" name="username" required>
+                        <div class="error-message" id="register-username-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">邮箱</label>
+                        <input type="email" id="register-email" name="email" required>
+                        <div class="error-message" id="register-email-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">密码</label>
+                        <div class="password-container">
+                            <input type="password" id="register-password" name="password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('register-password')">显示</button>
+                        </div>
+                        <div class="error-message" id="register-password-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-confirm-password">确认密码</label>
+                        <div class="password-container">
+                            <input type="password" id="register-confirm-password" name="confirm-password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('register-confirm-password')">显示</button>
+                        </div>
+                        <div class="error-message" id="register-confirm-password-error"></div>
+                    </div>
+                    
+                    <button type="submit" class="submit-button" id="register-submit">注册</button>
+                </form>
+                
+                <div class="form-footer">
+                    <a href="#" onclick="switchTab('login')">已有账号？立即登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载覆盖层 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <script>
+        // 切换登录/注册标签
+        function switchTab(tab) {
+            const loginTab = document.querySelector('.tab-button:first-child');
+            const registerTab = document.querySelector('.tab-button:last-child');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.add('active');
+                registerForm.classList.remove('active');
+            } else {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.add('active');
+                loginForm.classList.remove('active');
+            }
+            
+            // 清除错误信息
+            clearErrors();
+        }
+        
+        // 切换密码显示/隐藏
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '隐藏';
+            } else {
+                input.type = 'password';
+                button.textContent = '显示';
+            }
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // 显示字段错误
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorElement = document.getElementById(fieldId + '-error');
+            
+            field.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // 清除所有错误
+        function clearErrors() {
+            const errorFields = document.querySelectorAll('.error');
+            const errorMessages = document.querySelectorAll('.error-message');
+            
+            errorFields.forEach(field => field.classList.remove('error'));
+            errorMessages.forEach(message => {
+                message.style.display = 'none';
+                message.textContent = '';
+            });
+        }
+        
+        // 验证表单
+        function validateForm(formType) {
+            clearErrors();
+            let isValid = true;
+            
+            if (formType === 'login') {
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+                
+                if (!username) {
+                    showFieldError('login-username', '请输入用户名');
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    showFieldError('login-password', '请输入密码');
+                    isValid = false;
+                }
+            } else if (formType === 'register') {
+                const username = document.getElementById('register-username').value.trim();
+                const email = document.getElementById('register-email').value.trim();
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                
+                if (!username) {
+                    showFieldError('register-username', '请输入用户名');
+                    isValid = false;
+                } else if (username.length < 3) {
+                    showFieldError('register-username', '用户名至少3个字符');
+                    isValid = false;
+                }
+                
+                if (!email) {
+                    showFieldError('register-email', '请输入邮箱');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showFieldError('register-email', '请输入有效的邮箱地址');
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    showFieldError('register-password', '请输入密码');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    showFieldError('register-password', '密码至少6个字符');
+                    isValid = false;
+                }
+                
+                if (!confirmPassword) {
+                    showFieldError('register-confirm-password', '请确认密码');
+                    isValid = false;
+                } else if (password !== confirmPassword) {
+                    showFieldError('register-confirm-password', '两次输入的密码不一致');
+                    isValid = false;
+                }
+            }
+            
+            return isValid;
+        }
+        
+        // 处理登录
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            if (!validateForm('login')) {
+                return;
+            }
+            
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const submitButton = document.getElementById('login-submit');
+            
+            try {
+                submitButton.disabled = true;
+                showLoading();
+                
+                const response = await axios.post('/api/login', {
+                    username: username,
+                    password: password
+                });
+                
+                if (response.data.success) {
+                    // 保存token
+                    localStorage.setItem('auth_token', response.data.token);
+                    localStorage.setItem('user_info', JSON.stringify(response.data.user));
+                    
+                    // 设置cookie以供服务端验证
+                    document.cookie = `auth_token=${response.data.token}; path=/; max-age=${7*24*60*60}`; // 7天有效期
+                    console.log('登录成功，已设置cookie:', document.cookie);
+                    
+                    showNotification('登录成功！正在跳转...', 'success');
+                    
+                    // 跳转到首页
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showNotification(response.data.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                
+                if (error.response && error.response.data) {
+                    showNotification(error.response.data.message || '登录失败', 'error');
+                } else {
+                    showNotification('网络连接错误，请稍后重试', 'error');
+                }
+            } finally {
+                submitButton.disabled = false;
+                hideLoading();
+            }
+        }
+        
+        // 处理注册
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            if (!validateForm('register')) {
+                return;
+            }
+            
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const submitButton = document.getElementById('register-submit');
+            
+            try {
+                submitButton.disabled = true;
+                showLoading();
+                
+                const response = await axios.post('/api/register', {
+                    username: username,
+                    email: email,
+                    password: password
+                });
+                
+                if (response.data.success) {
+                    showNotification('注册成功！请登录', 'success');
+                    
+                    // 切换到登录页面
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('login-username').value = username;
+                    }, 1500);
+                } else {
+                    showNotification(response.data.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                
+                if (error.response && error.response.data) {
+                    const errorData = error.response.data;
+                    if (errorData.field_errors) {
+                        // 显示字段级错误
+                        Object.keys(errorData.field_errors).forEach(field => {
+                            const fieldId = `register-${field}`;
+                            showFieldError(fieldId, errorData.field_errors[field]);
+                        });
+                    } else {
+                        showNotification(errorData.message || '注册失败', 'error');
+                    }
+                } else {
+                    showNotification('网络连接错误，请稍后重试', 'error');
+                }
+            } finally {
+                submitButton.disabled = false;
+                hideLoading();
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否已经登录
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                // 验证token是否有效
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                
+                // 设置cookie以供服务端验证
+                document.cookie = `auth_token=${token}; path=/; max-age=${7*24*60*60}`; // 7天有效期
+                
+                axios.get('/api/user/profile')
+                    .then(response => {
+                        if (response.data.success) {
+                            // 已登录，跳转到首页
+                            showNotification('您已登录，正在跳转到首页...', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 1500);
+                        }
+                    })
+                    .catch(error => {
+                        // token无效，清除本地存储
+                        localStorage.removeItem('auth_token');
+                        localStorage.removeItem('user_info');
+                        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'; // 清除cookie
+                        delete axios.defaults.headers.common['Authorization'];
+                    });
+            }
+            
+            // 添加输入框焦点事件，清除错误状态
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.classList.remove('error');
+                    const errorElement = document.getElementById(this.id + '-error');
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# 示例自定义练习文件
+# 这个文件展示了如何创建自定义练习内容
+
+# 纯英文句子（用于语音练习）
+The quick brown fox jumps over the lazy dog.
+English is a widely spoken language around the world.
+Practice makes perfect in language learning.
+Artificial intelligence is changing our daily lives.
+Communication skills are essential for success.
+
+# 中英文对照（用于语法练习，使用 | 分隔）
+你好，很高兴见到你|Hello, nice to meet you
+今天天气怎么样？|How is the weather today?
+我想学习英语|I want to learn English
+这个苹果很好吃|This apple is very delicious
+请问现在几点了？|What time is it now?
+
+# 中英文对照（使用制表符分隔）
+我们明天见面吧	Let's meet tomorrow
+你能帮我一个忙吗？	Could you do me a favor?
+这家餐厅的食物很美味	The food in this restaurant is delicious
+学习新语言需要时间和耐心	Learning a new language takes time and patience
+祝你生日快乐！	Happy birthday to you!

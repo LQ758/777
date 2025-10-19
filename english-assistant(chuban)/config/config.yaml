@@ -1,0 +1,50 @@
+# config/config.yaml
+# 数据库配置
+database:
+  type: "mysql"                       # 数据库类型: mysql, sqlite
+  host: "localhost"                    # 使用localhost连接本地MySQL
+  port: 3306
+  database: "english_assistant"       # 数据库名称
+  username: "root"                     # MySQL用户名
+  password: "123123"                  # MySQL密码（请根据实际情况修改）
+  charset: "utf8mb4"                   # 字符集
+  pool_size: 10                       # 连接池大小
+  pool_recycle: 3600                  # 连接回收时间(秒)
+
+model:
+  whisper: "small"                    # Whisper 模型大小: tiny, base, small, medium
+  wav2vec2: "facebook/wav2vec2-base-960h"
+
+# 音素级发音评分配置
+phoneme_scoring:
+  enabled: true                        # 是否启用音素级评分
+  alignment_method: "ctc"              # 对齐方法: ctc, mfa, energy, uniform
+  feature_extraction:
+    f0: true                           # 基频特征
+    formants: true                     # 共振峰特征
+    spectral: true                     # 频谱特征
+    temporal: true                     # 时域特征
+  scoring_weights:
+    duration: 0.3                      # 时长权重
+    quality: 0.5                       # 质量权重
+    consistency: 0.2                   # 一致性权重
+  thresholds:
+    min_phoneme_duration: 0.03         # 最小音素时长(秒)
+    max_phoneme_duration: 0.4          # 最大音素时长(秒)
+    quality_threshold: 60              # 质量阈值
+
+language_tool:
+  server: "https://api.languagetool.org"  # 使用在线 API，避免 Java
+  language: "en-US"
+  mother_tongue: "zh-CN"
+
+audio:
+  duration: 5
+  sample_rate: 16000
+  channels: 1
+  format: "int16"
+
+output:
+  report_prefix: "report_"
+  audio_prefix: "recording_"
+  detailed_reports: true               # 是否生成详细报告

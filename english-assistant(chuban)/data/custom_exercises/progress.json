@@ -1,0 +1,135 @@
+{
+  "user_progress": {
+    "default": {
+      "demo-001": {
+        "exercise_id": "demo-001",
+        "results": [
+          {
+            "item_id": "item-001",
+            "score": 35.6,
+            "time_spent": 12.039,
+            "timestamp": "2025-10-04T15:31:48.762055"
+          },
+          {
+            "item_id": "item-001",
+            "score": 39.3,
+            "time_spent": 13.276,
+            "timestamp": "2025-10-12T16:45:05.229191"
+          },
+          {
+            "item_id": "item-001",
+            "score": 94.5,
+            "time_spent": 10.354,
+            "timestamp": "2025-10-12T16:45:17.464280"
+          },
+          {
+            "item_id": "item-001",
+            "score": 41.0,
+            "time_spent": 21.053,
+            "timestamp": "2025-10-12T16:53:18.748053"
+          },
+          {
+            "item_id": "item-002",
+            "score": 90.0,
+            "time_spent": 38.26,
+            "timestamp": "2025-10-12T16:54:41.749588"
+          },
+          {
+            "item_id": "item-002",
+            "score": 100.0,
+            "time_spent": 22.245,
+            "timestamp": "2025-10-12T17:19:10.175343"
+          },
+          {
+            "item_id": "item-001",
+            "score": 22.2,
+            "time_spent": 19.809,
+            "timestamp": "2025-10-12T17:31:38.841890"
+          }
+        ],
+        "stats": {
+          "total_attempts": 7,
+          "average_score": 60.371428571428574,
+          "best_score": 100.0,
+          "total_time": 137.036
+        }
+      },
+      "24685fd4-ea61-45fe-90f1-9f0b623e44f2": {
+        "exercise_id": "24685fd4-ea61-45fe-90f1-9f0b623e44f2",
+        "results": [
+          {
+            "item_id": "72dab8ca-ba52-462a-b973-fadd320b8669",
+            "score": 91.6,
+            "time_spent": 13.402,
+            "timestamp": "2025-10-12T16:55:48.905642"
+          },
+          {
+            "item_id": "72dab8ca-ba52-462a-b973-fadd320b8669",
+            "score": 84.4,
+            "time_spent": 10.138,
+            "timestamp": "2025-10-12T16:56:29.193108"
+          },
+          {
+            "item_id": "72dab8ca-ba52-462a-b973-fadd320b8669",
+            "score": 18.1,
+            "time_spent": 26.584,
+            "timestamp": "2025-10-12T17:16:49.671120"
+          }
+        ],
+        "stats": {
+          "total_attempts": 3,
+          "average_score": 64.7,
+          "best_score": 91.6,
+          "total_time": 50.123999999999995
+        }
+      },
+      "535d3aff-1c5a-4712-9678-04de097ffc4e": {
+        "exercise_id": "535d3aff-1c5a-4712-9678-04de097ffc4e",
+        "results": [
+          {
+            "item_id": "6b486200-cc32-4c9f-9be3-0652699b6852",
+            "score": 43.6,
+            "time_spent": 26.406,
+            "timestamp": "2025-10-12T17:38:09.189245"
+          },
+          {
+            "item_id": "e947f6fc-bdbb-43db-890e-e809ae646b54",
+            "score": 15.2,
+            "time_spent": 15.731,
+            "timestamp": "2025-10-12T17:38:31.533702"
+          },
+          {
+            "item_id": "6b486200-cc32-4c9f-9be3-0652699b6852",
+            "score": 18.2,
+            "time_spent": 28.184,
+            "timestamp": "2025-10-12T17:39:11.985494"
+          },
+          {
+            "item_id": "6b486200-cc32-4c9f-9be3-0652699b6852",
+            "score": 18.2,
+            "time_spent": 35.033,
+            "timestamp": "2025-10-12T17:39:18.826788"
+          },
+          {
+            "item_id": "03b015cc-5375-4a06-bf16-b44803c70da2",
+            "score": 17.9,
+            "time_spent": 13.091,
+            "timestamp": "2025-10-12T17:39:40.908037"
+          },
+          {
+            "item_id": "03b015cc-5375-4a06-bf16-b44803c70da2",
+            "score": 19.3,
+            "time_spent": 11.623,
+            "timestamp": "2025-10-19T16:19:43.869996"
+          }
+        ],
+        "stats": {
+          "total_attempts": 6,
+          "average_score": 22.066666666666666,
+          "best_score": 43.6,
+          "total_time": 130.06799999999998
+        }
+      }
+    }
+  }
+}

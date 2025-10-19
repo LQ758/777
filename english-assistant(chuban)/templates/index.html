@@ -1,0 +1,3063 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言学习助手 | 语音评分与语法检测</title>
+    
+    <!-- 外部CDN资源 - 原始版本 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://unpkg.com/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="/static/test_api.js"></script>
+
+<style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Noto Sans', system-ui, sans-serif;
+            background-color: #E9F1FF;
+            color: #212529;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .app-container {
+            width: 1440px;
+            min-height: 800px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-card {
+            background: #FFFFFF;
+            border: 1px solid #E9ECEF;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px -4px rgba(0,0,0,0.04);
+            overflow: hidden;
+            flex: 1;
+            padding: 32px;
+        }
+        
+        header.navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0 32px 0;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #F1F3F5;
+            border-radius: 6px;
+            padding: 4px;
+        }
+        
+        .tab-btn {
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #495057;
+        }
+        
+        .tab-btn.active {
+            background: #FFFFFF;
+            color: #3A86FF;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        
+        .module {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .module.active {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 32px;
+            height: 100%;
+        }
+        
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 100%;
+        }
+        
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+        
+        .description {
+            color: #868E96;
+            margin-bottom: 20px;
+        }
+        
+        .sentence-box {
+            background: #F8F9FA;
+            padding: 24px;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+        
+        .dashboard {
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .score-display {
+            font-size: 5rem;
+            font-weight: 800;
+            margin: 24px 0;
+            transition: color 0.4s;
+        }
+        
+        .score-rating {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #FB8500;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 180px;
+        }
+        
+        .recorder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .rec-btn {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #3A86FF;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.5);
+        }
+        
+        .rec-btn:hover {
+            background: #2B6BC8;
+        }
+        
+        .recording .rec-btn {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .timer {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #DEE2E6;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .error-text {
+            background: #FFF5F5;
+            padding: 24px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .highlight {
+            background: rgba(230, 57, 70, 0.12);
+            color: #E63946;
+            border-bottom: 2px dashed #E63946;
+        }
+        
+        .upload-area {
+            border: 2px dashed #DEE2E6;
+            border-radius: 8px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-area:hover {
+            border-color: #3A86FF;
+        }
+        
+        .upload-icon {
+            background: #F1F3F5;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            color: #3A86FF;
+        }
+        
+        .file-desc {
+            color: #868E96;
+            margin-bottom: 16px;
+        }
+        
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 0 0 0;
+            color: #868E96;
+            border-top: 1px solid #E9ECEF;
+            margin-top: 32px;
+        }
+        
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .progress-bar {
+            width: 160px;
+            height: 6px;
+            background: #E9ECEF;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #3A86FF;
+            width: 65%;
+        }
+        
+        .setting-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(58, 134, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(58, 134, 255, 0); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .mode-selector {
+            display: flex;
+            background: #F1F3F5;
+            border-radius: 6px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .mode-btn.active {
+            background: #FFFFFF;
+            color: #3A86FF;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        
+        /* 语音输入相关样式 */
+        .voice-input-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #F0F4FF;
+            border: 1px solid #3A86FF;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .voice-input-toggle:hover {
+            background: #E9F1FF;
+        }
+        
+        .voice-record-btn {
+            position: relative;
+            background: #3A86FF;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+        }
+        
+        .voice-record-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(58, 134, 255, 0.4);
+        }
+        
+        .voice-record-btn.recording {
+            background: #E63946;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .voice-input-controls {
+            text-align: center;
+            padding: 20px;
+            background: #F8F9FA;
+            border-radius: 8px;
+            border: 2px dashed #3A86FF;
+        }
+        
+        .success-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #52B788, #40916C);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(82, 183, 136, 0.3);
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .disabled-input {
+            background: #F8F9FA !important;
+            color: #868E96 !important;
+            cursor: not-allowed !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="navbar">
+            <div class="brand">
+                <span class="icon icon-language"></span>
+                <span>感觉差点什么的语学助手</span>
+            </div>
+            <div class="tabs">
+                <div class="tab-btn active" data-target="speech">英语语音评分</div>
+                <div class="tab-btn" data-target="grammar">英文语法检测</div>
+                <div class="tab-btn" data-target="custom">自定义练习</div>
+            </div>
+            <div class="user-section" id="user-section" style="display: flex; align-items: center; gap: 12px;">
+                <!-- 登录状态显示 -->
+                <div id="user-info" style="display: none; align-items: center; gap: 8px;">
+                    <span class="icon icon-account-circle" style="font-size: 1.5rem; color: #3A86FF;"></span>
+                    <span id="username-display" style="color: #495057; font-weight: 600;"></span>
+                    <button id="logout-btn" style="background: #E63946; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem;">登出</button>
+                </div>
+                
+                <!-- 未登录状态显示 -->
+                <div id="guest-info" style="display: flex; align-items: center; gap: 8px;">
+                    <a href="/login" style="background: #3A86FF; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">登录</a>
+                </div>
+            </div>
+        </header>
+        
+        <main class="content-card">
+            <!-- 语音评分模块 -->
+            <div id="speech" class="module active">
+                <div class="panel">
+                    <div>
+                        <h2>英语发音评分</h2>
+                        <p class="description">朗读以下英语句子，系统将评估您的发音准确度并给出改进建议</p>
+                        <div class="sentence-box">
+                            The pursuit of knowledge and innovation drives human progress.
+                        </div>
+                        <button class="generate-sentence-btn" style="background: #3A86FF; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; margin-top: 16px; display: flex; align-items: center; gap: 8px;">
+                            <iconify-icon icon="mdi:refresh" width="20" height="20"></iconify-icon>
+                            <span>生成新句子</span>
+                        </button>
+                    </div>
+                    
+                    <div class="recorder">
+                        <div>
+                            <p class="timer">00:00</p>
+                            <button class="rec-btn">
+                                <iconify-icon icon="mdi:microphone" width="32" height="32"></iconify-icon>
+                            </button>
+                        </div>
+                        <div class="chart-container" id="waveform"></div>
+                        
+                        <!-- 添加评分模式切换 -->
+                        <div style="margin-top: 16px; text-align: center;">
+                            <label style="display: flex; align-items: center; gap: 8px; justify-content: center; cursor: pointer; margin-bottom: 8px;">
+                                <input type="checkbox" id="useSimpleScoring" style="width: auto;">
+                                <span style="font-size: 0.9rem; color: #495057;">使用简化评分模式</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; justify-content: center; cursor: pointer;">
+                                <input type="checkbox" id="useDetailedScoring" style="width: auto;">
+                                <span style="font-size: 0.9rem; color: #495057;">启用完整模式详细分析</span>
+                            </label>
+                            <p style="font-size: 0.8rem; color: #868E96; margin-top: 4px;">
+                                简化模式更稳定，完整模式提供详细的发音改进建议
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard">
+                    <h2>成绩分析</h2>
+                    <div class="score-display" style="color: #3A86FF">0</div>
+                    <div class="score-rating">未评分</div>
+                    
+                    <div class="chart-container" id="score-dashboard"></div>
+                    
+                    <div style="margin-top: 24px; text-align: center;">
+                        <p style="margin-bottom: 12px; color: #495057">发音改善建议:</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 语法检测模块 -->
+            <div id="grammar" class="module">
+                <div class="panel">
+                    <div>
+                        <h2>英文语法检测</h2>
+                        <p class="description">输入英文文本，系统将检测语法错误并提供修改建议</p>
+                        <div class="sentence-box">
+                            I have went to the store yesterday and buyed some groceries.
+                        </div>
+                        <button class="generate-sentence-btn" style="background: #3A86FF; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; margin-top: 16px; display: flex; align-items: center; gap: 8px;">
+                            <iconify-icon icon="mdi:refresh" width="20" height="20"></iconify-icon>
+                            <span>生成新句子</span>
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <!-- 语音输入选项 -->
+                        <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="voice-input-toggle" style="width: auto;">
+                                <span style="font-size: 0.9rem; color: #495057;">🎤 启用语音输入</span>
+                            </label>
+                            <span style="font-size: 0.8rem; color: #868E96;">（勾选后将使用Whisper模型识别语音转文字）</span>
+                        </div>
+                        
+                        <textarea id="grammar-text-input" rows="6" placeholder="在此输入您的英文文本...">I have went to the store yesterday and buyed some groceries.</textarea>
+                        
+                        <!-- 语音输入控制区域 -->
+                        <div id="voice-input-controls" style="display: none; margin-top: 16px; text-align: center;">
+                            <button id="voice-record-btn" style="background: #3A86FF; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto;">
+                                <iconify-icon icon="mdi:microphone" width="20" height="20"></iconify-icon>
+                                <span>开始录音</span>
+                            </button>
+                            <p style="font-size: 0.8rem; color: #868E96; margin-top: 8px;">点击录音按钮，说出您要检测的英文内容</p>
+                        </div>
+                        
+                        <!-- 提交检测按钮 -->
+                        <button id="submit-grammar-check" style="background: #3A86FF; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin-top: 16px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;">
+                            <iconify-icon icon="mdi:check-circle" width="20" height="20"></iconify-icon>
+                            <span>提交检测</span>
+                        </button>
+                        
+
+                    </div>
+                </div>
+                
+                <div class="panel" style="height: 100%;">
+                    <h2>语法分析</h2>
+                    <div class="error-text">
+                        <p>I have <span class="highlight">went</span> to the store yesterday and <span class="highlight">buyed</span> some groceries.</p>
+                        <p style="margin-top: 24px;">修改建议:</p>
+                        <p style="margin-top: 8px;">1. "went" 应为 "gone"（"have" 后应使用过去分词）</p>
+                        <p>2. "buyed" 为错误形式，正确的过去式是 "bought"</p>
+                        <p>正确形式: <strong>I have gone to the store yesterday and bought some groceries.</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 自定义练习模块 -->
+            <div id="custom" class="module">
+                <div class="panel">
+                    <div>
+                        <h2>自定义练习</h2>
+                        <p class="description">导入学习材料，创建个性化练习内容</p>
+                        
+                        <div class="mode-selector">
+                            <div class="mode-btn active" data-mode="text">文本导入</div>
+                            <div class="mode-btn" data-mode="practice">开始练习</div>
+                        </div>
+                        
+                        <!-- 文本导入区域 -->
+                        <div id="text-import-area">
+                            <textarea id="import-text-area" rows="8" style="width: 100%; padding: 16px; border: 1px solid #DEE2E6; border-radius: 6px; font-size: 1rem; margin-bottom: 12px;" placeholder="输入练习内容：
+
+纯英文句子（一行一个）：用于语音练习
+Hello world
+How are you today
+
+中文|英文（用|分隔）：用于翻译练习
+我爱学习|I love learning
+今天天气很好|The weather is nice today"></textarea>
+                            <input type="text" id="exercise-name-input" placeholder="练习集名称（可选）" style="width: 100%; padding: 12px; border: 1px solid #DEE2E6; border-radius: 6px; margin-bottom: 12px;">
+                            <button id="import-text-btn" style="background: #3A86FF; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; width: 100%;">
+                                <iconify-icon icon="mdi:import" width="20" height="20" style="vertical-align: middle;"></iconify-icon>
+                                导入文本创建练习集
+                            </button>
+                        </div>
+                        
+                        <!-- 练习模式选择区域 -->
+                        <div id="practice-mode-area" style="display: none;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">选择练习集</label>
+                                <select id="practice-exercise-select" style="width: 100%; padding: 12px; border: 1px solid #DEE2E6; border-radius: 6px;">
+                                    <option value="">选择练习集...</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">练习类型</label>
+                                <select id="practice-type-select" style="width: 100%; padding: 12px; border: 1px solid #DEE2E6; border-radius: 6px;">
+                                    <option value="speech">🎤 语音练习</option>
+                                    <option value="phoneme">🔊 音素评分</option>
+                                    <option value="grammar">✏️ 语法检测</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #495057;">难度 <span style="font-size: 0.8rem; color: #868E96;">(影响句子长度和复杂度)</span></label>
+                                <select id="difficulty-select" style="width: 100%; padding: 12px; border: 1px solid #DEE2E6; border-radius: 6px;">
+                                    <option value="">全部 - 随机选择任意难度</option>
+                                    <option value="easy">简单 - 短句子，常用词汇</option>
+                                    <option value="medium" selected>中等 - 中等长度，正常难度</option>
+                                    <option value="hard">困难 - 长句子，复杂语法</option>
+                                </select>
+                            </div>
+                            <button id="start-custom-practice-btn" style="width: 100%; background: #3A86FF; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                🎯 开始练习
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 进度统计 -->
+                    <div style="margin-top: 24px; padding: 16px; background: #F8F9FA; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="color: #868E96;">练习进度</span>
+                            <span id="progressPercent" style="font-weight: 600; color: #3A86FF;">0%</span>
+                        </div>
+                        <div class="progress-bar" style="width: 100%; height: 8px; background: #E9ECEF; border-radius: 4px; overflow: hidden;">
+                            <div id="progressFill" class="progress-fill" style="height: 100%; background: #3A86FF; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;">
+                            <div style="text-align: center;">
+                                <div id="totalItems" style="font-size: 1.5rem; font-weight: 700; color: #3A86FF;">0</div>
+                                <div style="font-size: 0.875rem; color: #868E96;">总题数</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div id="completedItems" style="font-size: 1.5rem; font-weight: 700; color: #52B788;">0</div>
+                                <div style="font-size: 0.875rem; color: #868E96;">已完成</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div id="avgScore" style="font-size: 1.5rem; font-weight: 700; color: #FFD166;">--</div>
+                                <div style="font-size: 0.875rem; color: #868E96;">平均分</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div style="height: 100%; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 style="margin: 0;">练习区域</h2>
+                        </div>
+                        
+                        <!-- 练习内容显示区域 -->
+                        <div id="custom-exercise-content" style="flex: 1; padding: 20px; background: #F8F9FA; border-radius: 8px; text-align: center; margin-bottom: 16px;">
+                            <div style="color: #868E96;">
+                                <iconify-icon icon="mdi:book-open-variant" width="64" height="64" style="color: #DEE2E6; margin-bottom: 16px;"></iconify-icon>
+                                <p>请先创建或选择练习集，然后切换到“开始练习”模式</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户输入区域 -->
+                        <div id="custom-input-area" style="display: none; margin-bottom: 16px;">
+                            <textarea id="custom-answer-input" placeholder="请在此输入您的英文翻译..." style="width: 100%; padding: 12px; border: 1px solid #DEE2E6; border-radius: 6px; min-height: 80px; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <!-- 控制按钮区域 -->
+                        <div id="custom-exercise-controls" style="text-align: center;"></div>
+                        
+                        <!-- 结果显示区域 -->
+                        <div id="custom-exercise-result" style="display: none; margin-top: 16px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="setting-btn">
+                <iconify-icon icon="mdi:cog" width="20" height="20"></iconify-icon>
+                <span>系统设置</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 切换选项卡
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const modules = document.querySelectorAll('.module');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 移除所有激活状态
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    modules.forEach(m => m.classList.remove('active'));
+
+                    // 添加当前激活状态
+                    btn.classList.add('active');
+                    const targetModule = document.getElementById(btn.dataset.target);
+                    if (targetModule) {
+                        targetModule.classList.add('active');
+                    }
+                });
+            });
+
+            // 默认激活第一个选项卡
+            if (tabBtns.length > 0) {
+                tabBtns[0].click();
+            }
+
+            // 初始化波形图
+            function initWaveform() {
+                const chartDom = document.getElementById('waveform');
+                if (!chartDom) return;
+                
+                const myChart = echarts.init(chartDom);
+                
+                // 生成模拟录音波形数据
+                const data = Array.from({length: 200}, () => Math.random() * 50);
+                
+                const option = {
+                    grid: {
+                        top: 10,
+                        bottom: 10,
+                        left: 0,
+                        right: 0
+                    },
+                    xAxis: {
+                        type: 'category',
+                        show: false
+                    },
+                    yAxis: {
+                        type: 'value',
+                        show: false
+                    },
+                    series: [
+                        {
+                            name: '音频波形',
+                            type: 'line',
+                            showSymbol: false,
+                            data: data,
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 0,
+                                    y2: 1,
+                                    colorStops: [
+                                        {offset: 0, color: 'rgba(58, 134, 255, 0.3)'},
+                                        {offset: 1, color: 'rgba(58, 134, 255, 0.05)'}
+                                    ]
+                                }
+                            },
+                            lineStyle: {
+                                width: 1.5,
+                                color: '#3A86FF'
+                            }
+                        }
+                    ]
+                };
+                
+                myChart.setOption(option);
+            }
+
+            // 初始化评分仪表盘，并暴露可更新的函数
+            let scoreChart = null;
+            function initDashboard() {
+                const chartDom = document.getElementById('score-dashboard');
+                if (!chartDom) return;
+                scoreChart = echarts.init(chartDom);
+
+                const option = {
+                    tooltip: { formatter: '{a} : {c}' },
+                    series: [{
+                        name: '发音评分',
+                        type: 'gauge',
+                        startAngle: 180,
+                        endAngle: 0,
+                        min: 0,
+                        max: 100,
+                        radius: '100%',
+                        center: ['50%', '60%'],
+                        splitNumber: 10,
+                        axisLine: { lineStyle: { width: 10, color: [[0.6,'#FFD166'],[0.8,'#3A86FF'],[1,'#52B788']] } },
+                        pointer: { icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z', length: '12%', width: 10, offsetCenter: [0,'-60%'], itemStyle: { color: '#495057' } },
+                        axisTick: { length: 8, lineStyle: { color: 'auto', width: 1 } },
+                        splitLine: { length: 12, lineStyle: { color: 'auto', width: 2 } },
+                        axisLabel: { distance: -20, color: '#868E96', fontSize: 12 },
+                        title: { offsetCenter: [0,'-5%'], fontSize: 12, color: '#868E96' },
+                        detail: { valueAnimation: true, fontSize: 24, offsetCenter: [0,'30%'], fontWeight: 600, formatter: v => v + '分', color: 'inherit' },
+                        data: [{ value: 0, name: '得分' }]
+                    }]
+                };
+                scoreChart.setOption(option);
+            }
+
+            function updateScoreDashboard(value) {
+                if (!scoreChart) return;
+                const v = Math.max(0, Math.min(100, Number(value) || 0));
+                scoreChart.setOption({ series: [{ data: [{ value: v, name: '得分' }] }] });
+            }
+
+            initDashboard();
+
+            // 语音评分模块
+            const speechModule = document.getElementById('speech');
+            if (speechModule) {
+                const getSentenceBtn = speechModule.querySelector('.generate-sentence-btn');
+                const sentenceDisplay = speechModule.querySelector('.sentence-box');
+                const recordBtn = speechModule.querySelector('.rec-btn');
+                const scoreDisplay = speechModule.querySelector('.score-display');
+                const timerDisplay = speechModule.querySelector('.timer');
+                const useSimpleScoringCheckbox = speechModule.querySelector('#useSimpleScoring');
+                const useDetailedScoringCheckbox = speechModule.querySelector('#useDetailedScoring');
+
+                let currentSentence = '';
+                let audioBlob = null;
+                let isSimpleScoring = useSimpleScoringCheckbox ? useSimpleScoringCheckbox.checked : true; // 默认使用简化模式
+                let isDetailedScoring = useDetailedScoringCheckbox ? useDetailedScoringCheckbox.checked : false; // 默认不使用详细分析
+
+                // 添加评分模式切换监听器
+                if (useSimpleScoringCheckbox) {
+                    useSimpleScoringCheckbox.addEventListener('change', function() {
+                        isSimpleScoring = this.checked;
+                        console.log(`简化评分模式: ${isSimpleScoring ? '开启' : '关闭'}`);
+                        
+                        if (isSimpleScoring) {
+                            // 切换到简化模式时，重置评分显示
+                            scoreDisplay.textContent = '0';
+                            scoreDisplay.style.color = '#3A86FF';
+                            document.querySelector('.score-rating').textContent = '未评分';
+                            clearDetailedResults();
+                        }
+                    });
+                }
+                
+                if (useDetailedScoringCheckbox) {
+                    useDetailedScoringCheckbox.addEventListener('change', function() {
+                        isDetailedScoring = this.checked;
+                        console.log(`详细评分模式: ${isDetailedScoring ? '开启' : '关闭'}`);
+                        
+                        if (!isDetailedScoring) {
+                            clearDetailedResults();
+                        }
+                    });
+                }
+
+                // 清理详细结果显示
+                function clearDetailedResults() {
+                    const detailedResultsContainer = document.getElementById('detailed-results');
+                    if (detailedResultsContainer) {
+                        detailedResultsContainer.remove();
+                    }
+                }
+
+                // 显示详细评分结果
+                function displayDetailedResults(result) {
+                    // 清理之前的结果
+                    clearDetailedResults();
+                    
+                    // 创建详细结果容器
+                    const detailedContainer = document.createElement('div');
+                    detailedContainer.id = 'detailed-results';
+                    detailedContainer.style.cssText = `
+                        margin-top: 24px; 
+                        padding: 16px; 
+                        background: #F8F9FA; 
+                        border-radius: 8px; 
+                        border: 1px solid #E9ECEF;
+                        max-height: 500px;
+                        overflow-y: auto;
+                    `;
+                    
+                    let detailedHTML = `
+                        <h4 style="margin-bottom: 16px; color: #495057; font-size: 1.1rem;">🔍 详细分析结果</h4>
+                    `;
+                    
+                    // 显示单词级评分和建议（优先显示）
+                    if (result.word_scores && result.word_scores.length > 0) {
+                        // 筛选需要改进的单词
+                        const wordsNeedingImprovement = result.word_scores.filter(ws => ws.needs_improvement);
+                        
+                        if (wordsNeedingImprovement.length > 0) {
+                            detailedHTML += `
+                                <div style="margin-bottom: 20px; padding: 12px; background: #FFF5F5; border-left: 4px solid #E63946; border-radius: 4px;">
+                                    <h5 style="margin-bottom: 12px; color: #E63946; font-size: 1rem;">🎯 需要重点改进的单词:</h5>
+                            `;
+                            
+                            wordsNeedingImprovement.forEach(wordInfo => {
+                                const qualityColor = {
+                                    'excellent': '#52B788',
+                                    'good': '#3A86FF', 
+                                    'fair': '#FFD166',
+                                    'poor': '#E63946',
+                                    'unknown': '#868E96'
+                                }[wordInfo.quality] || '#868E96';
+                                
+                                const qualityText = {
+                                    'excellent': '优秀',
+                                    'good': '良好', 
+                                    'fair': '一般',
+                                    'poor': '较差',
+                                    'unknown': '未知'
+                                }[wordInfo.quality] || '未知';
+                                
+                                detailedHTML += `
+                                    <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #E9ECEF;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                            <strong style="color: #495057; font-size: 1rem;">'${wordInfo.word}'</strong>
+                                            <span style="
+                                                padding: 3px 8px; 
+                                                background: ${qualityColor}; 
+                                                color: white; 
+                                                border-radius: 12px; 
+                                                font-size: 0.8rem;
+                                                font-weight: 600;
+                                            ">${wordInfo.score.toFixed(1)}分 (${qualityText})</span>
+                                        </div>
+                                `;
+                                
+                                // 显示该单词的具体建议
+                                if (wordInfo.suggestions && wordInfo.suggestions.length > 0) {
+                                    detailedHTML += `
+                                        <div style="margin-left: 16px;">
+                                            <p style="font-size: 0.9rem; color: #495057; margin-bottom: 4px; font-weight: 600;">💡 改进建议:</p>
+                                            <ul style="margin-left: 16px; margin-bottom: 8px;">
+                                    `;
+                                    wordInfo.suggestions.forEach(suggestion => {
+                                        detailedHTML += `<li style="color: #495057; font-size: 0.85rem; margin-bottom: 2px;">${suggestion}</li>`;
+                                    });
+                                    detailedHTML += `</ul>`;
+                                }
+                                
+                                // 显示音素级详情（可展开）
+                                if (wordInfo.phoneme_scores && wordInfo.phoneme_scores.length > 0) {
+                                    detailedHTML += `
+                                        <details style="margin-left: 16px;">
+                                            <summary style="cursor: pointer; color: #3A86FF; font-size: 0.85rem;">📊 查看音素详情</summary>
+                                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+                                    `;
+                                    wordInfo.phoneme_scores.forEach(ps => {
+                                        const phonemeColor = {
+                                            'excellent': '#52B788',
+                                            'good': '#3A86FF',
+                                            'fair': '#FFD166',
+                                            'poor': '#E63946'
+                                        }[ps.quality] || '#868E96';
+                                        
+                                        detailedHTML += `
+                                            <span style="
+                                                display: inline-block;
+                                                padding: 2px 6px;
+                                                background: ${phonemeColor};
+                                                color: white;
+                                                border-radius: 3px;
+                                                font-size: 0.75rem;
+                                                margin: 1px;
+                                            " title="评分: ${ps.score.toFixed(1)}">
+                                                ${ps.phoneme} (${ps.score.toFixed(0)})
+                                            </span>
+                                        `;
+                                    });
+                                    detailedHTML += `
+                                            </div>
+                                        </details>
+                                    `;
+                                }
+                                
+                                detailedHTML += `</div>`;
+                            });
+                            
+                            detailedHTML += `</div>`;
+                        }
+                        
+                        // 显示表现良好的单词（鼓励）
+                        const goodWords = result.word_scores.filter(ws => !ws.needs_improvement && ws.score > 0);
+                        if (goodWords.length > 0) {
+                            detailedHTML += `
+                                <div style="margin-bottom: 16px; padding: 12px; background: #F0F8F0; border-left: 4px solid #52B788; border-radius: 4px;">
+                                    <h5 style="margin-bottom: 8px; color: #52B788; font-size: 0.95rem;">🌟 发音良好的单词:</h5>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            `;
+                            goodWords.forEach(wordInfo => {
+                                detailedHTML += `
+                                    <span style="
+                                        padding: 4px 8px;
+                                        background: #52B788;
+                                        color: white;
+                                        border-radius: 12px;
+                                        font-size: 0.85rem;
+                                        font-weight: 500;
+                                    ">'${wordInfo.word}' (${wordInfo.score.toFixed(1)})</span>
+                                `;
+                            });
+                            detailedHTML += `
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // 显示音素级评分（折叠显示，避免过于冗长）
+                    if (result.phoneme_scores && result.phoneme_scores.length > 0) {
+                        detailedHTML += `
+                            <details style="margin-bottom: 16px;">
+                                <summary style="cursor: pointer; color: #3A86FF; font-weight: 600; margin-bottom: 8px;">🔊 查看完整音素分析 (${result.phoneme_scores.length}个音素)</summary>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: white; border-radius: 4px;">
+                        `;
+                        
+                        result.phoneme_scores.forEach(ps => {
+                            let bgColor = '#52B788';  // 绿色（优秀）
+                            if (ps.quality === 'good') bgColor = '#3A86FF';      // 蓝色（良好）
+                            else if (ps.quality === 'fair') bgColor = '#FFD166';  // 黄色（一般）
+                            else if (ps.quality === 'poor') bgColor = '#E63946';  // 红色（较差）
+                            
+                            detailedHTML += `
+                                <span style="
+                                    display: inline-block; 
+                                    padding: 4px 8px; 
+                                    margin: 2px; 
+                                    background: ${bgColor};
+                                    color: white; 
+                                    border-radius: 4px; 
+                                    font-size: 0.9rem;
+                                    cursor: pointer;
+                                " title="评分: ${ps.score.toFixed(1)}, 时间: ${ps.start_time.toFixed(2)}s-${ps.end_time.toFixed(2)}s">
+                                    ${ps.phoneme} (${ps.score.toFixed(0)})
+                                </span>
+                            `;
+                        });
+                        
+                        detailedHTML += `
+                                </div>
+                                <p style="font-size: 0.8rem; color: #868E96; margin-top: 8px;">
+                                    颜色说明: <span style="color: #52B788;">█ 优秀</span> 
+                                    <span style="color: #3A86FF;">█ 良好</span> 
+                                    <span style="color: #FFD166;">█ 一般</span> 
+                                    <span style="color: #E63946;">█ 需改进</span>
+                                </p>
+                            </details>
+                        `;
+                    }
+                    
+                    // 显示发现的问题（如果有）
+                    if (result.pronunciation_issues && result.pronunciation_issues.length > 0) {
+                        detailedHTML += `
+                            <details style="margin-bottom: 16px;">
+                                <summary style="cursor: pointer; color: #E63946; font-weight: 600;">⚠️ 发现的技术问题 (${result.pronunciation_issues.length}项)</summary>
+                                <ul style="margin-left: 16px; color: #495057; margin-top: 8px;">
+                        `;
+                        result.pronunciation_issues.forEach(issue => {
+                            detailedHTML += `<li style="margin-bottom: 4px; font-size: 0.9rem;">${issue}</li>`;
+                        });
+                        detailedHTML += `</ul></details>`;
+                    }
+                    
+                    // 显示改进建议（重要，始终展开）
+                    if (result.improvement_suggestions && result.improvement_suggestions.length > 0) {
+                        detailedHTML += `
+                            <div style="margin-bottom: 16px; padding: 12px; background: #F0F4FF; border-left: 4px solid #3A86FF; border-radius: 4px;">
+                                <h5 style="margin-bottom: 8px; color: #3A86FF; font-weight: 600;">💡 综合改进建议:</h5>
+                                <div style="color: #495057; line-height: 1.5;">
+                        `;
+                        result.improvement_suggestions.forEach(suggestion => {
+                            // 检查是否是标题行（包含emoji或特殊字符）
+                            if (suggestion.match(/^[\u{1F300}-\u{1F9FF}]|^\s*[\u2022\u2023\u25E6\u2043\u2219]/u) || 
+                                suggestion.includes(':')) {
+                                detailedHTML += `<p style="font-weight: 600; margin: 8px 0 4px 0; color: #3A86FF;">${suggestion}</p>`;
+                            } else {
+                                detailedHTML += `<p style="margin: 4px 0; padding-left: 12px;">${suggestion}</p>`;
+                            }
+                        });
+                        detailedHTML += `</div></div>`;
+                    }
+                    
+                    // 显示练习统计（如果有）
+                    if (result.duration_analysis) {
+                        detailedHTML += `
+                            <details style="margin-bottom: 8px;">
+                                <summary style="cursor: pointer; color: #868E96; font-size: 0.9rem;">📊 语音分析数据</summary>
+                                <div style="font-size: 0.8rem; color: #495057; margin-top: 8px;">
+                                    <p>总时长: ${result.duration_analysis.total_duration?.toFixed(2) || '未知'}秒</p>
+                                    <p>语速: ${result.duration_analysis.speech_rate?.toFixed(1) || '未知'} 音素/秒</p>
+                                    <p>平均音素时长: ${result.duration_analysis.avg_phoneme_duration?.toFixed(3) || '未知'}秒</p>
+                                </div>
+                            </details>
+                        `;
+                    }
+                    
+                    detailedContainer.innerHTML = detailedHTML;
+                    
+                    // 将详细结果添加到右侧面板
+                    const dashboard = speechModule.querySelector('.dashboard');
+                    if (dashboard) {
+                        dashboard.appendChild(detailedContainer);
+                    }
+                }
+                getSentenceBtn.addEventListener('click', async () => {
+                    try {
+                        const response = await axios.get('/api/random-english-sentence');
+                        currentSentence = response.data.sentence;
+                        sentenceDisplay.textContent = currentSentence;
+                        scoreDisplay.textContent = '0';
+                        scoreDisplay.style.color = '#3A86FF';
+                        document.querySelector('.score-rating').textContent = '未评分';
+                        updateScoreDashboard(0);
+                    } catch (error) {
+                        console.error('获取句子失败:', error);
+                        alert('获取句子失败，请重试');
+                    }
+                });
+
+                // 录音功能实现
+                let mediaRecorder;
+                let audioChunks = [];
+                let recordingTimer;
+                let seconds = 0;
+                let minutes = 0;
+
+                // 格式化时间显示
+                function formatTime() {
+                    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+
+                // 更新计时器
+                function updateTimer() {
+                    seconds++;
+                    if (seconds >= 60) {
+                        seconds = 0;
+                        minutes++;
+                    }
+                    timerDisplay.textContent = formatTime();
+                }
+
+                // 开始录音
+                async function startRecording() {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        mediaRecorder = new MediaRecorder(stream);
+                        audioChunks = [];
+
+                        mediaRecorder.ondataavailable = event => {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            stream.getTracks().forEach(track => track.stop());
+                            alert('录音完成');
+                            initWaveform(); // 更新波形图
+                        };
+
+                        mediaRecorder.start();
+                        seconds = 0;
+                        minutes = 0;
+                        timerDisplay.textContent = formatTime();
+                        recordingTimer = setInterval(updateTimer, 1000);
+                    } catch (error) {
+                        console.error('录音权限请求失败:', error);
+                        alert('无法访问麦克风。请确保已授予麦克风权限并尝试再次录音。');
+                        recorder.classList.remove('recording');
+                    }
+                }
+
+                // 停止录音
+                function stopRecording() {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                        clearInterval(recordingTimer);
+                    }
+                }
+
+                // 录音按钮状态切换
+                recordBtn.addEventListener('click', () => {
+                    // 确保有句子才能录音
+                    if (!currentSentence) {
+                        alert('请先点击"生成新句子"按钮获取句子');
+                        return;
+                    }
+
+                    const recorder = recordBtn.closest('.recorder');
+                    recorder.classList.toggle('recording');
+
+                    if (recorder.classList.contains('recording')) {
+                        startRecording();
+                    } else {
+                        stopRecording();
+                        timerDisplay.textContent = '00:00';
+                    }
+                });
+
+                // 添加提交评分按钮事件
+                const submitScoreBtn = document.createElement('button');
+                submitScoreBtn.textContent = '提交评分';
+                submitScoreBtn.style.cssText = 'background: #3A86FF; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; margin-top: 16px;';
+                speechModule.querySelector('.panel').appendChild(submitScoreBtn);
+
+                // 提交评分
+                submitScoreBtn.addEventListener('click', async () => {
+                    if (!currentSentence || !audioBlob) {
+                        alert('请先获取句子并完成录音');
+                        return;
+                    }
+
+                    try {
+                        // 显示加载状态
+                        submitScoreBtn.textContent = '评分中...';
+                        submitScoreBtn.disabled = true;
+                        
+                        // 清理之前的详细结果
+                        clearDetailedResults();
+                        
+                        // 检查用户选择的评分模式
+                        const useSimpleScoring = useSimpleScoringCheckbox ? useSimpleScoringCheckbox.checked : true;
+                        const useDetailedScoring = useDetailedScoringCheckbox ? useDetailedScoringCheckbox.checked : false;
+                        
+                        let apiEndpoint;
+                        let modeText;
+                        
+                        if (useDetailedScoring) {
+                            apiEndpoint = '/api/score-pronunciation-detailed';
+                            modeText = '音素级详细模式';
+                        } else if (useSimpleScoring) {
+                            apiEndpoint = '/api/score-pronunciation-simple';
+                            modeText = '简化模式';
+                        } else {
+                            apiEndpoint = '/api/score-pronunciation';
+                            modeText = '完整模式';
+                        }
+                        
+                        console.log(`使用${modeText}，接口: ${apiEndpoint}`);
+                        
+                        const formData = new FormData();
+                        formData.append('reference_text', currentSentence);
+                        formData.append('audio_file', audioBlob, 'recording.webm');
+
+                        console.log('正在提交评分请求...');
+                        const response = await axios.post(apiEndpoint, formData);
+                        console.log('评分响应:', response.data);
+                        
+                        if (response.data.error) {
+                            throw new Error(response.data.error);
+                        }
+                        
+                        // 处理不同类型的评分结果
+                        let score, detailedResult = null;
+                        
+                        if (useDetailedScoring && response.data.overall_score !== undefined) {
+                            // 详细评分结果
+                            score = response.data.overall_score;
+                            detailedResult = response.data;
+                        } else {
+                            // 简单评分结果
+                            score = response.data.score;
+                        }
+                        
+                        // 更新评分显示
+                        scoreDisplay.textContent = score;
+                        updateScoreDashboard(score);
+                        
+                        // 更新评分等级
+                        const scoreNum = parseFloat(score);
+                        if (scoreNum >= 90) {
+                            document.querySelector('.score-rating').textContent = '优秀';
+                            scoreDisplay.style.color = '#52B788';
+                        } else if (scoreNum >= 75) {
+                            document.querySelector('.score-rating').textContent = '良好';
+                            scoreDisplay.style.color = '#3A86FF';
+                        } else if (scoreNum >= 60) {
+                            document.querySelector('.score-rating').textContent = '及格';
+                            scoreDisplay.style.color = '#FFD166';
+                        } else {
+                            document.querySelector('.score-rating').textContent = '需要改进';
+                            scoreDisplay.style.color = '#E63946';
+                        }
+                        
+                        // 显示详细结果（如果有）
+                        if (detailedResult && detailedResult.detailed !== false) {
+                            displayDetailedResults(detailedResult);
+                            alert(`评分完成！您的得分是：${score}分\n（使用${modeText}）\n请查看下方的详细分析结果`);
+                        } else {
+                            // 显示成功消息
+                            alert(`评分完成！您的得分是：${score}分\n（使用${modeText}）`);
+                        }
+                        
+                    } catch (error) {
+                        console.error('评分失败:', error);
+                        
+                        let errorMessage = '评分失败，请重试';
+                        if (error.response && error.response.data && error.response.data.error) {
+                            errorMessage = `评分失败：${error.response.data.error}`;
+                        } else if (error.message) {
+                            errorMessage = `评分失败：${error.message}`;
+                        }
+                        
+                        alert(errorMessage);
+                        
+                        // 如果完整模式失败，建议用户切换到简化模式
+                        if (!useSimpleScoringCheckbox.checked && !useDetailedScoringCheckbox.checked) {
+                            if (confirm('完整评分模式失败，是否切换到简化模式重试？')) {
+                                useSimpleScoringCheckbox.checked = true;
+                                alert('已切换到简化模式，请重新点击"提交评分"按钮');
+                            }
+                        }
+                        
+                        // 重置评分显示
+                        scoreDisplay.textContent = '0';
+                        scoreDisplay.style.color = '#3A86FF';
+                        document.querySelector('.score-rating').textContent = '评分失败';
+                    } finally {
+                        // 恢复按钮状态
+                        submitScoreBtn.textContent = '提交评分';
+                        submitScoreBtn.disabled = false;
+                    }
+                });
+            }
+
+            // 语法检测模块
+            const grammarModule = document.getElementById('grammar');
+            if (grammarModule) {
+                const getChineseBtn = grammarModule.querySelector('.generate-sentence-btn');
+                const chineseDisplay = grammarModule.querySelector('.sentence-box');
+                const translatedInput = grammarModule.querySelector('#grammar-text-input');
+                const recordGrammarBtn = grammarModule.querySelector('.rec-btn');
+                const errorTextDisplay = grammarModule.querySelector('.error-text');
+                
+                // 语音输入相关元素
+                const voiceInputToggle = document.getElementById('voice-input-toggle');
+                const voiceInputControls = document.getElementById('voice-input-controls');
+                const voiceRecordBtn = document.getElementById('voice-record-btn');
+
+                let currentChinese = '';
+                let grammarMediaRecorder = null;
+                let grammarChunks = [];
+                let grammarAudioBlob = null;
+                
+                // 语音输入状态
+                let isVoiceInputMode = false;
+                let voiceRecorder = null;
+                let voiceChunks = [];
+                let isVoiceRecording = false;
+                
+                // 语音输入切换事件
+                if (voiceInputToggle) {
+                    voiceInputToggle.addEventListener('change', function() {
+                        isVoiceInputMode = this.checked;
+                        
+                        if (isVoiceInputMode) {
+                            // 启用语音输入模式
+                            translatedInput.disabled = true;
+                            translatedInput.placeholder = '语音输入模式已启用，请点击下方录音按钮进行语音输入';
+                            translatedInput.style.background = '#F8F9FA';
+                            voiceInputControls.style.display = 'block';
+                        } else {
+                            // 禁用语音输入模式
+                            translatedInput.disabled = false;
+                            translatedInput.placeholder = '在此输入您的英文文本...';
+                            translatedInput.style.background = 'white';
+                            voiceInputControls.style.display = 'none';
+                            // 停止正在进行的录音
+                            if (isVoiceRecording && voiceRecorder) {
+                                voiceRecorder.stop();
+                            }
+                        }
+                    });
+                }
+                
+                // 语音录音功能
+                if (voiceRecordBtn) {
+                    voiceRecordBtn.addEventListener('click', async function() {
+                        if (!isVoiceRecording) {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                voiceChunks = [];
+                                voiceRecorder = new MediaRecorder(stream);
+                                
+                                voiceRecorder.ondataavailable = (e) => {
+                                    if (e.data.size > 0) voiceChunks.push(e.data);
+                                };
+                                
+                                voiceRecorder.onstop = async () => {
+                                    const audioBlob = new Blob(voiceChunks, { type: 'audio/webm' });
+                                    stream.getTracks().forEach(t => t.stop());
+                                    isVoiceRecording = false;
+                                    
+                                    // 更新按钮状态
+                                    voiceRecordBtn.innerHTML = `
+                                        <iconify-icon icon="mdi:loading" width="20" height="20" class="animate-spin"></iconify-icon>
+                                        <span>识别中...</span>
+                                    `;
+                                    voiceRecordBtn.disabled = true;
+                                    
+                                    try {
+                                        // 调用Whisper API进行语音识别
+                                        await processVoiceInput(audioBlob);
+                                    } catch (error) {
+                                        console.error('语音识别失败:', error);
+                                        alert('语音识别失败，请重试');
+                                    } finally {
+                                        // 恢复按钮状态
+                                        voiceRecordBtn.innerHTML = `
+                                            <iconify-icon icon="mdi:microphone" width="20" height="20"></iconify-icon>
+                                            <span>开始录音</span>
+                                        `;
+                                        voiceRecordBtn.disabled = false;
+                                    }
+                                };
+                                
+                                voiceRecorder.start();
+                                isVoiceRecording = true;
+                                
+                                // 更新按钮状态
+                                voiceRecordBtn.innerHTML = `
+                                    <iconify-icon icon="mdi:stop" width="20" height="20"></iconify-icon>
+                                    <span>停止录音</span>
+                                `;
+                                voiceRecordBtn.style.background = '#E63946';
+                                
+                            } catch (error) {
+                                console.error('录音权限请求失败:', error);
+                                alert('无法访问麦克风，请检查权限设置');
+                            }
+                        } else {
+                            // 停止录音
+                            if (voiceRecorder && voiceRecorder.state !== 'inactive') {
+                                voiceRecorder.stop();
+                            }
+                        }
+                    });
+                }
+                
+                // 处理语音输入的函数
+                async function processVoiceInput(audioBlob) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('audio_file', audioBlob, 'voice_input.webm');
+                        
+                        const response = await axios.post('/api/transcribe-audio', formData);
+                        
+                        if (response.data.error) {
+                            throw new Error(response.data.error);
+                        }
+                        
+                        const transcribedText = response.data.transcribed_text || '';
+                        
+                        if (transcribedText.trim()) {
+                            // 将识别的文本填入文本框
+                            translatedInput.value = transcribedText;
+                            
+                            // 显示成功提示
+                            const successMsg = document.createElement('div');
+                            successMsg.style.cssText = `
+                                position: fixed;
+                                top: 20px;
+                                right: 20px;
+                                background: #52B788;
+                                color: white;
+                                padding: 12px 20px;
+                                border-radius: 6px;
+                                font-size: 0.9rem;
+                                z-index: 1000;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                            `;
+                            successMsg.textContent = `✅ 语音识别成功: "${transcribedText}"`;
+                            document.body.appendChild(successMsg);
+                            
+                            // 3秒后移除提示
+                            setTimeout(() => {
+                                if (successMsg.parentNode) {
+                                    successMsg.parentNode.removeChild(successMsg);
+                                }
+                            }, 3000);
+                            
+                        } else {
+                            alert('未检测到有效的语音内容，请重新录音');
+                        }
+                        
+                    } catch (error) {
+                        console.error('语音识别处理失败:', error);
+                        throw error;
+                    }
+                }
+
+                // 获取随机中文句子
+                getChineseBtn.addEventListener('click', async () => {
+                    try {
+                        const response = await axios.get('/api/random-chinese-sentence');
+                        currentChinese = response.data.sentence;
+                        chineseDisplay.textContent = currentChinese;
+                        translatedInput.value = '';
+                        errorTextDisplay.innerHTML = '<p>请输入英文翻译（可选录音）...</p>';
+                        grammarAudioBlob = null;
+                    } catch (error) {
+                        console.error('获取中文句子失败:', error);
+                        alert('获取中文句子失败，请重试');
+                    }
+                });
+
+                // 录音功能（可选）
+                if (recordGrammarBtn) {
+                    recordGrammarBtn.addEventListener('click', async () => {
+                        if (!currentChinese) {
+                            alert('请先获取中文句子');
+                            return;
+                        }
+
+                        const container = recordGrammarBtn.closest('.panel');
+                        container.classList.toggle('recording');
+
+                        try {
+                            if (container.classList.contains('recording')) {
+                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                grammarChunks = [];
+                                grammarMediaRecorder = new MediaRecorder(stream);
+                                grammarMediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) grammarChunks.push(e.data); };
+                                grammarMediaRecorder.onstop = () => {
+                                    grammarAudioBlob = new Blob(grammarChunks, { type: 'audio/webm' });
+                                    stream.getTracks().forEach(t => t.stop());
+                                    alert('录音完成');
+                                };
+                                grammarMediaRecorder.start();
+                            } else {
+                                if (grammarMediaRecorder && grammarMediaRecorder.state !== 'inactive') {
+                                    grammarMediaRecorder.stop();
+                                }
+                            }
+                        } catch (err) {
+                            console.error('录音失败:', err);
+                            alert('无法访问麦克风');
+                            container.classList.remove('recording');
+                        }
+                    });
+                } else {
+                    console.log('未找到.rec-btn元素，跳过录音功能初始化');
+                }
+
+                // 添加提交语法检测按钮功能
+                const submitGrammarCheckBtn = document.getElementById('submit-grammar-check');
+                if (submitGrammarCheckBtn) {
+                    console.log('找到语法检测按钮');
+                    submitGrammarCheckBtn.addEventListener('click', async () => {
+                        console.log('语法检测按钮被点击');
+                        const textInput = translatedInput.value.trim();
+                        
+                        if (!textInput) {
+                            alert('请输入要检测的英文文本');
+                            return;
+                        }
+
+                        try {
+                            submitGrammarCheckBtn.textContent = '检测中...';
+                            submitGrammarCheckBtn.disabled = true;
+                            
+                            const formData = new FormData();
+                            formData.append('text', textInput);
+                            
+                            console.log('向 /api/check-grammar-text 发送请求，文本内容:', textInput);
+
+                            const response = await axios.post('/api/check-grammar-text', formData);
+                            console.log('收到响应:', response.data);
+                            const result = response.data;
+                            
+                            if (result.error) {
+                                throw new Error(result.error);
+                            }
+                            
+                            // 显示检测结果
+                            if (result.success === false && result.errors && result.errors.length > 0) {
+                                let errorHtml = `<p style="color: #E63946; font-weight: 600; margin-bottom: 16px;">❌ 发现 ${result.errors.length} 处语法问题:</p>`;
+                                
+                                result.errors.forEach((error, index) => {
+                                    errorHtml += `
+                                        <div style="margin-bottom: 16px; padding: 12px; background: #FFF5F5; border-left: 4px solid #E63946; border-radius: 4px;">
+                                            <div style="font-weight: 600; color: #E63946; margin-bottom: 8px;">错误 ${index + 1}: ${error.rule_id || '语法错误'}</div>
+                                            <div style="margin-bottom: 8px; color: #495057;">
+                                                <strong>问题:</strong> ${error.message || error.original_message || '语法不正确'}
+                                            </div>
+                                            <div style="margin-bottom: 8px; color: #495057;">
+                                                <strong>上下文:</strong> "${error.context || ''}"
+                                            </div>
+                                            <div style="color: #495057;">
+                                                <strong>建议修改:</strong> ${error.replacements && error.replacements.length > 0 ? error.replacements.join(', ') : '无具体建议'}
+                                            </div>
+                                        </div>`;
+                                });
+                                
+                                // 如果有修正建议
+                                if (result.corrected_text && result.corrected_text !== textInput) {
+                                    errorHtml += `
+                                        <div style="margin-top: 16px; padding: 12px; background: #F0F8F0; border-left: 4px solid #52B788; border-radius: 4px;">
+                                            <div style="font-weight: 600; color: #52B788; margin-bottom: 8px;">✅ 建议修正:</div>
+                                            <div style="color: #495057; font-style: italic; font-size: 1.05rem; line-height: 1.4; margin-bottom: 8px;">${result.corrected_text}</div>
+                                            <button onclick="copyToClipboard('${result.corrected_text.replace(/'/g, "\\'").replace(/"/g, '\\"')}')" style="background: #52B788; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">📋 复制修正版本</button>
+                                        </div>`;
+                                }
+                                
+                                errorTextDisplay.innerHTML = errorHtml;
+                            } else {
+                                // 没有发现错误
+                                errorTextDisplay.innerHTML = `
+                                    <div style="padding: 12px; background: #F0F8F0; border-left: 4px solid #52B788; border-radius: 4px;">
+                                        <div style="font-weight: 600; color: #52B788; margin-bottom: 8px;">✅ 语法检测完成</div>
+                                        <div style="color: #495057;">${result.message || '未发现明显的语法错误，您的英文表达很好！'}</div>
+                                    </div>`;
+                            }
+                            
+                        } catch (error) {
+                            console.error('语法检测失败:', error);
+                            
+                            let errorMessage = '语法检测失败，请重试';
+                            if (error.response && error.response.data && error.response.data.error) {
+                                errorMessage = `检测失败: ${error.response.data.error}`;
+                            } else if (error.message) {
+                                errorMessage = `检测失败: ${error.message}`;
+                            }
+                            
+                            alert(errorMessage);
+                            
+                            // 显示错误信息
+                            errorTextDisplay.innerHTML = `
+                                <div style="padding: 12px; background: #FFF5F5; border-left: 4px solid #E63946; border-radius: 4px;">
+                                    <div style="font-weight: 600; color: #E63946; margin-bottom: 8px;">❌ 检测失败</div>
+                                    <div style="color: #495057;">${errorMessage}</div>
+                                </div>`;
+                        } finally {
+                            // 恢复按钮状态
+                            submitGrammarCheckBtn.innerHTML = `
+                                <iconify-icon icon="mdi:check-circle" width="20" height="20"></iconify-icon>
+                                <span>提交检测</span>
+                            `;
+                            submitGrammarCheckBtn.disabled = false;
+                        }
+                    });
+                } else {
+                    console.error('未找到ID为submit-grammar-check的按钮');
+                }
+
+
+            }
+
+            // 文件上传效果
+            const uploadArea = document.querySelector('.upload-area');
+            if (uploadArea) {
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = '#3A86FF';
+                    uploadArea.style.backgroundColor = '#F1F8FF';
+                });
+                
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.style.borderColor = '#DEE2E6';
+                    uploadArea.style.backgroundColor = 'white';
+                });
+            }
+
+            // ================================
+            // 自定义练习模块 - 修复版本
+            // ================================
+            (function() {
+                console.log('🔧 初始化自定义练习模块 (修复版)');
+                const customModule = document.getElementById('custom');
+                if (!customModule) {
+                    console.error('❌ 未找到自定义练习模块容器');
+                    return;
+                }
+                
+                // DOM元素检查和获取
+                const exerciseSetSelect = customModule.querySelector('#practice-exercise-select');
+                const createExerciseSetBtn = customModule.querySelector('#createExerciseSetBtn');
+                const modeBtns = customModule.querySelectorAll('[data-mode]');
+                const importTextArea = customModule.querySelector('#import-text-area');
+                const exerciseNameInput = customModule.querySelector('#exercise-name-input');
+                const importTextBtn = customModule.querySelector('#import-text-btn');
+                const exerciseContent = customModule.querySelector('#custom-exercise-content');
+                const voiceInputArea = customModule.querySelector('#custom-input-area');
+                const textInputArea = customModule.querySelector('#custom-input-area');
+                const resultArea = customModule.querySelector('#custom-exercise-result');
+                const recordCustomBtn = customModule.querySelector('#record-custom-btn');
+                const recordStatus = customModule.querySelector('#recordStatus');
+                const recordProgress = customModule.querySelector('#recordProgress');
+                const answerTextarea = customModule.querySelector('#custom-answer-input');
+                const startPracticeBtn = customModule.querySelector('#start-custom-practice-btn');
+                const submitAnswerBtn = customModule.querySelector('#submit-custom-answer-btn');
+                const nextExerciseBtn = customModule.querySelector('#next-exercise-btn');
+                const difficultySelect = customModule.querySelector('#difficulty-select');
+                
+                // 进度显示元素
+                const progressPercent = customModule.querySelector('#progressPercent');
+                const progressFill = customModule.querySelector('#progressFill');
+                const totalItems = customModule.querySelector('#totalItems');
+                const completedItems = customModule.querySelector('#completedItems');
+                const avgScore = customModule.querySelector('#avgScore');
+                
+                // 检查关键元素是否存在
+                console.log('📋 DOM元素检查结果:', {
+                    exerciseSetSelect: !!exerciseSetSelect,
+                    importTextBtn: !!importTextBtn,
+                    startPracticeBtn: !!startPracticeBtn,
+                    exerciseContent: !!exerciseContent
+                });
+                
+                // 状态变量
+                let currentExerciseSet = null;
+                let currentExerciseItem = null;
+                let currentPracticeMode = 'text';
+                let customMediaRecorder = null;
+                let customChunks = [];
+                let customAudioBlob = null;
+                let exerciseStartTime = null;
+                
+                // 加载练习集列表
+                async function loadExerciseSets() {
+                    console.log('🔄 开始加载练习集列表...');
+                    try {
+                        const response = await axios.get('/api/exercise-sets');
+                        console.log('📦 API响应:', response.data);
+                        
+                        const exerciseSets = response.data.exercise_sets || [];
+                        console.log(`📚 找到 ${exerciseSets.length} 个练习集`);
+                        
+                        if (exerciseSetSelect) {
+                            exerciseSetSelect.innerHTML = '<option value="">选择已有练习集...</option>';
+                            exerciseSets.forEach(set => {
+                                const option = document.createElement('option');
+                                option.value = set.id;
+                                option.textContent = `${set.name} (${set.stats.total_items}题)`;
+                                exerciseSetSelect.appendChild(option);
+                                console.log(`  ➕ 添加练习集: ${set.name}`);
+                            });
+                        } else {
+                            console.warn('⚠️ exerciseSetSelect 元素不存在');
+                        }
+                        
+                        return exerciseSets;
+                        
+                    } catch (error) {
+                        console.error('❌ 加载练习集失败:', error);
+                        if (exerciseSetSelect) {
+                            exerciseSetSelect.innerHTML = '<option value="">加载失败，请刷新重试</option>';
+                        }
+                        return [];
+                    }
+                }
+                
+                // 初始化加载
+                console.log('🚀 启动初始加载...');
+                loadExerciseSets().then(exerciseSets => {
+                    console.log(`✅ 初始加载完成，共 ${exerciseSets.length} 个练习集`);
+                });
+                
+                // 创建练习集
+                if (createExerciseSetBtn) {
+                    createExerciseSetBtn.addEventListener('click', async () => {
+                        const name = prompt('请输入练习集名称:');
+                        if (!name) return;
+                        
+                        try {
+                            const response = await axios.post('/api/exercise-sets', { name, description: '', type: 'mixed' });
+                            if (response.data.success) {
+                                alert(response.data.message);
+                                await loadExerciseSets();
+                                if (exerciseSetSelect) {
+                                    exerciseSetSelect.value = response.data.exercise_id;
+                                    await onExerciseSetChange();
+                                }
+                            }
+                        } catch (error) {
+                            alert('创建练习集失败，请重试');
+                        }
+                    });
+                }
+                
+                // 练习集切换
+                async function onExerciseSetChange() {
+                    const exerciseId = exerciseSetSelect ? exerciseSetSelect.value : null;
+                    if (!exerciseId) {
+                        currentExerciseSet = null;
+                        updateProgressDisplay();
+                        return;
+                    }
+                    
+                    try {
+                        const response = await axios.get(`/api/exercise-sets/${exerciseId}`);
+                        currentExerciseSet = response.data;
+                        updateProgressDisplay();
+                        resetExerciseArea();
+                    } catch (error) {
+                        alert('加载练习集失败');
+                    }
+                }
+                
+                if (exerciseSetSelect) {
+                    exerciseSetSelect.addEventListener('change', onExerciseSetChange);
+                }
+                
+                // 更新进度显示
+                function updateProgressDisplay() {
+                    if (!currentExerciseSet) {
+                        if (progressPercent) progressPercent.textContent = '0%';
+                        if (progressFill) progressFill.style.width = '0%';
+                        if (totalItems) totalItems.textContent = '0';
+                        if (completedItems) completedItems.textContent = '0';
+                        if (avgScore) avgScore.textContent = '--';
+                        return;
+                    }
+                    
+                    const stats = currentExerciseSet.stats || {};
+                    const total = stats.total_items || 0;
+                    const completed = stats.completed_count || 0;
+                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    
+                    if (progressPercent) progressPercent.textContent = `${percent}%`;
+                    if (progressFill) progressFill.style.width = `${percent}%`;
+                    if (totalItems) totalItems.textContent = total;
+                    if (completedItems) completedItems.textContent = completed;
+                    if (avgScore) avgScore.textContent = stats.average_score ? stats.average_score.toFixed(1) : '--';
+                }
+                
+                // 模式切换
+                modeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        modeBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentPracticeMode = btn.dataset.mode;
+                        resetExerciseArea();
+                    });
+                });
+                
+                // 文本导入功能修复
+                if (importTextBtn) {
+                    console.log('🔗 绑定文本导入按钮事件');
+                    importTextBtn.addEventListener('click', async () => {
+                        console.log('🔄 文本导入按钮被点击');
+                        
+                        const content = importTextArea ? importTextArea.value.trim() : '';
+                        const name = exerciseNameInput ? exerciseNameInput.value.trim() : '';
+                        
+                        console.log('📋 导入内容:', { content: content.substring(0, 100) + '...', name });
+                        
+                        if (!content) {
+                            alert('请输入练习内容');
+                            console.warn('⚠️ 练习内容为空');
+                            return;
+                        }
+                        
+                        const finalName = name || `文本练习_${new Date().toLocaleDateString()}`;
+                        console.log(`🏷️ 最终练习集名称: ${finalName}`);
+                        
+                        try {
+                            importTextBtn.textContent = '导入中...';
+                            importTextBtn.disabled = true;
+                            console.log('🚀 开始向服务器发送导入请求...');
+                            
+                            const response = await axios.post('/api/import-exercise', { 
+                                content, 
+                                name: finalName 
+                            });
+                            
+                            console.log('📦 服务器响应:', response.data);
+                            
+                            if (response.data.success) {
+                                alert(response.data.message);
+                                console.log('✅ 导入成功，刷新练习集列表...');
+                                
+                                // 清空输入
+                                if (importTextArea) importTextArea.value = '';
+                                if (exerciseNameInput) exerciseNameInput.value = '';
+                                
+                                // 切换到练习模式
+                                const practiceBtn = document.querySelector('[data-mode="practice"]');
+                                if (practiceBtn) {
+                                    practiceBtn.click();
+                                    console.log('🔄 已切换到练习模式');
+                                    
+                                    // 等待模式切换完成后加载练习集
+                                    setTimeout(async () => {
+                                        await loadPracticeExercises();
+                                        
+                                        // 自动选中新创建的练习集
+                                        const practiceSelect = document.getElementById('practice-exercise-select');
+                                        if (practiceSelect && response.data.exercise_id) {
+                                            practiceSelect.value = response.data.exercise_id;
+                                            await updateProgressForSelectedExercise();
+                                            console.log(`🎯 自动选中新创建的练习集: ${response.data.exercise_id}`);
+                                        }
+                                    }, 500);
+                                }
+                                
+                                console.log('🧹 已清空输入框');
+                                
+                            } else {
+                                throw new Error(response.data.error || '导入失败');
+                            }
+                        } catch (error) {
+                            console.error('❌ 导入失败:', error);
+                            const errorMsg = error.response?.data?.error || error.message || '导入练习失败，请重试';
+                            alert(errorMsg);
+                        } finally {
+                            importTextBtn.textContent = '导入文本创建练习集';
+                            importTextBtn.disabled = false;
+                            console.log('🔄 按钮状态恢复');
+                        }
+                    });
+                } else {
+                    console.warn('⚠️ 未找到文本导入按钮 (importTextBtn)');
+                }
+                
+                // 开始练习功能修复
+                if (startPracticeBtn) {
+                    console.log('🔗 绑定开始练习按钮事件');
+                    startPracticeBtn.addEventListener('click', async () => {
+                        console.log('🎯 开始练习按钮被点击');
+                        
+                        if (!currentExerciseSet) {
+                            alert('请先选择或创建练习集');
+                            console.warn('⚠️ 未选择练习集');
+                            return;
+                        }
+                        
+                        console.log(`📚 当前练习集: ${currentExerciseSet.name} (ID: ${currentExerciseSet.id})`);
+                        
+                        try {
+                            startPracticeBtn.textContent = '加载中...';
+                            startPracticeBtn.disabled = true;
+                            console.log('🚀 开始加载练习项目...');
+                            
+                            const mode = currentPracticeMode === 'speech' ? 'speech' : 'grammar';
+                            const difficulty = difficultySelect ? difficultySelect.value : '';
+                            
+                            console.log(`🎲 练习参数: 模式=${mode}, 难度=${difficulty || '全部'}`);
+                            
+                            const requestData = {
+                                exercise_id: currentExerciseSet.id,
+                                mode,
+                                difficulty
+                            };
+                            
+                            console.log('📤 发送请求到 /api/custom-exercise:', requestData);
+                            
+                            const response = await axios.post('/api/custom-exercise', requestData);
+                            console.log('📦 服务器响应:', response.data);
+                            
+                            if (response.data.error) {
+                                throw new Error(response.data.error);
+                            }
+                            
+                            currentExerciseItem = response.data;
+                            exerciseStartTime = Date.now();
+                            
+                            console.log('✅ 获取练习项目成功，开始显示...');
+                            displayExerciseItem();
+                            
+                            // 更新界面状态
+                            startPracticeBtn.style.display = 'none';
+                            if (submitAnswerBtn) {
+                                submitAnswerBtn.style.display = 'flex';
+                                console.log('📝 显示提交答案按钮');
+                            }
+                            if (nextExerciseBtn) nextExerciseBtn.style.display = 'none';
+                            if (resultArea) resultArea.style.display = 'none';
+                            
+                        } catch (error) {
+                            console.error('❌ 加载练习失败:', error);
+                            const errorMsg = error.response?.data?.error || error.message || '加载练习失败，请重试';
+                            alert(errorMsg);
+                        } finally {
+                            startPracticeBtn.textContent = '开始练习';
+                            startPracticeBtn.disabled = false;
+                            console.log('🔄 按钮状态恢复');
+                        }
+                    });
+                } else {
+                    console.warn('⚠️ 未找到开始练习按钮 (startPracticeBtn)');
+                }
+                
+                // 显示练习题目
+                function displayExerciseItem() {
+                    if (!currentExerciseItem || !exerciseContent) return;
+                    
+                    if (resultArea) {
+                        resultArea.style.display = 'none';
+                        resultArea.innerHTML = '';
+                    }
+                    customAudioBlob = null;
+                    
+                    const diffText = currentExerciseItem.difficulty ? `<div style="margin-top: 12px; font-size: 0.85rem; color: #868E96;">难度: <span style="color: #3A86FF; font-weight: 600;">${getDifficultyText(currentExerciseItem.difficulty)}</span></div>` : '';
+                    
+                    if (currentExerciseItem.reference_text) {
+                        exerciseContent.innerHTML = `
+                            <div style="text-align: left;">
+                                <div style="font-size: 0.9rem; color: #868E96; margin-bottom: 8px;">请朗读以下内容：</div>
+                                <div style="font-size: 1.3rem; font-weight: 500; color: #212529; line-height: 1.6;">${currentExerciseItem.reference_text}</div>
+                                ${diffText}
+                            </div>
+                        `;
+                        if (voiceInputArea) voiceInputArea.style.display = 'block';
+                        if (textInputArea) textInputArea.style.display = 'none';
+                        if (recordStatus) recordStatus.textContent = '未录音';
+                        if (recordProgress) recordProgress.style.width = '0%';
+                    } else if (currentExerciseItem.chinese_sentence) {
+                        exerciseContent.innerHTML = `
+                            <div style="text-align: left;">
+                                <div style="font-size: 0.9rem; color: #868E96; margin-bottom: 8px;">请将以下中文翻译为英文：</div>
+                                <div style="font-size: 1.3rem; font-weight: 500; color: #212529; line-height: 1.6;">${currentExerciseItem.chinese_sentence}</div>
+                                ${diffText}
+                            </div>
+                        `;
+                        if (voiceInputArea) voiceInputArea.style.display = 'none';
+                        if (textInputArea) textInputArea.style.display = 'block';
+                        if (answerTextarea) answerTextarea.value = '';
+                    }
+                }
+                
+                function getDifficultyText(difficulty) {
+                    const map = { easy: '简单', medium: '中等', hard: '困难' };
+                    return map[difficulty] || difficulty;
+                }
+                
+                // 录音功能
+                if (recordCustomBtn) {
+                    recordCustomBtn.addEventListener('click', async () => {
+                        const isRecording = recordCustomBtn.classList.contains('recording');
+                        
+                        if (!isRecording) {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                customChunks = [];
+                                customMediaRecorder = new MediaRecorder(stream);
+                                
+                                customMediaRecorder.ondataavailable = (e) => {
+                                    if (e.data.size > 0) customChunks.push(e.data);
+                                };
+                                
+                                customMediaRecorder.onstop = () => {
+                                    customAudioBlob = new Blob(customChunks, { type: 'audio/webm' });
+                                    stream.getTracks().forEach(t => t.stop());
+                                    if (recordStatus) recordStatus.textContent = '录音完成';
+                                    if (recordProgress) {
+                                        recordProgress.style.width = '100%';
+                                        recordProgress.style.background = '#52B788';
+                                    }
+                                };
+                                
+                                customMediaRecorder.start();
+                                recordCustomBtn.classList.add('recording');
+                                if (recordStatus) recordStatus.textContent = '录音中...';
+                                if (recordProgress) {
+                                    recordProgress.style.width = '50%';
+                                    recordProgress.style.background = '#E63946';
+                                }
+                                
+                            } catch (error) {
+                                alert('无法访问麦克风，请检查权限设置');
+                            }
+                        } else {
+                            if (customMediaRecorder && customMediaRecorder.state !== 'inactive') {
+                                customMediaRecorder.stop();
+                                recordCustomBtn.classList.remove('recording');
+                            }
+                        }
+                    });
+                }
+                
+                // 提交答案
+                if (submitAnswerBtn) {
+                    submitAnswerBtn.addEventListener('click', async () => {
+                        if (!currentExerciseItem) return;
+                        
+                        try {
+                            submitAnswerBtn.textContent = '评分中...';
+                            submitAnswerBtn.disabled = true;
+                            
+                            let score = 0;
+                            let feedback = '';
+                            
+                            if (currentExerciseItem.reference_text) {
+                                if (!customAudioBlob) {
+                                    alert('请先录音');
+                                    return;
+                                }
+                                
+                                const formData = new FormData();
+                                formData.append('reference_text', currentExerciseItem.reference_text);
+                                formData.append('audio_file', customAudioBlob, 'custom_recording.webm');
+                                
+                                const response = await axios.post('/api/score-pronunciation-simple', formData);
+                                score = parseFloat(response.data.score);
+                                feedback = `您的发音得分：<span style="font-size: 2rem; font-weight: 800; color: #3A86FF;">${score}</span>分`;
+                                
+                            } else if (currentExerciseItem.chinese_sentence) {
+                                const userAnswer = answerTextarea ? answerTextarea.value.trim() : '';
+                                if (!userAnswer) {
+                                    alert('请输入您的翻译');
+                                    return;
+                                }
+                                
+                                const response = await axios.post('/api/check-grammar-text', { text: userAnswer });
+                                
+                                if (response.data.success) {
+                                    score = 100;
+                                    feedback = '<div style="color: #52B788; font-size: 1.2rem;">✅ 语法正确！</div>';
+                                } else {
+                                    score = Math.max(0, 100 - response.data.error_count * 10);
+                                    feedback = `<div style="color: #E63946; font-size: 1.1rem;">❌ 检测到 ${response.data.error_count} 处语法问题</div>`;
+                                    response.data.errors.forEach((err, idx) => {
+                                        feedback += `<div style="margin-top: 8px; padding: 8px; background: #FFF5F5; border-radius: 4px; font-size: 0.9rem;">
+                                            <strong>【错误 ${idx + 1}】</strong> ${err.message}
+                                        </div>`;
+                                    });
+                                    
+                                    if (currentExerciseItem.reference_english) {
+                                        feedback += `<div style="margin-top: 12px; padding: 12px; background: #E9F1FF; border-radius: 4px;">
+                                            <div style="font-size: 0.9rem; color: #868E96; margin-bottom: 4px;">参考答案：</div>
+                                            <div style="font-size: 1rem; color: #212529;">${currentExerciseItem.reference_english}</div>
+                                        </div>`;
+                                    }
+                                }
+                            }
+                            
+                            if (resultArea) {
+                                resultArea.innerHTML = `<div style="text-align: center;">${feedback}</div>`;
+                                resultArea.style.display = 'block';
+                            }
+                            
+                            // 记录结果
+                            if (currentExerciseItem.item_id) {
+                                const timeSpent = (Date.now() - exerciseStartTime) / 1000;
+                                await axios.post('/api/exercise-results', {
+                                    exercise_id: currentExerciseSet.id,
+                                    item_id: currentExerciseItem.item_id,
+                                    score,
+                                    time_spent: timeSpent
+                                });
+                                await onExerciseSetChange();
+                            }
+                            
+                            submitAnswerBtn.style.display = 'none';
+                            if (nextExerciseBtn) {
+                                // 隐藏下一题按钮，等待用户查看结果
+                                nextExerciseBtn.style.display = 'none';
+                                
+                                // 在结果区域添加查看时间提示
+                                if (resultArea) {
+                                    const originalContent = resultArea.innerHTML;
+                                    resultArea.innerHTML = originalContent + `
+                                        <div id="mainResultTimer" style="margin-top: 16px; padding: 12px; background: #E9F1FF; border-radius: 6px; text-align: center;">
+                                            <div style="color: #3A86FF; font-weight: 600; margin-bottom: 8px;">🕰️ 请仔细查看练习结果</div>
+                                            <div style="color: #495057; font-size: 0.9rem;">“下一题”按钮将在 <span id="mainCountdown" style="font-weight: 600; color: #E63946;">8</span> 秒后显示</div>
+                                            <div style="margin-top: 8px;">
+                                                <button onclick="showMainNextButtonEarly()" style="background: #52B788; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem;">
+                                                    立即进入下一题
+                                                </button>
+                                                <button onclick="extendMainViewTime()" style="background: #FFD166; color: #212529; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; margin-left: 8px;">
+                                                    继续查看 (+5秒)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                
+                                // 启动主练习区域的倒计时
+                                startMainResultCountdown(nextExerciseBtn);
+                            }
+                            
+                        } catch (error) {
+                            alert(error.response?.data?.error || '提交失败，请重试');
+                        } finally {
+                            submitAnswerBtn.textContent = '提交答案';
+                            submitAnswerBtn.disabled = false;
+                        }
+                    });
+                }
+                
+                // 下一题
+                if (nextExerciseBtn) {
+                    nextExerciseBtn.addEventListener('click', () => {
+                        if (startPracticeBtn) startPracticeBtn.click();
+                    });
+                }
+                
+                // 重置练习区域
+                function resetExerciseArea() {
+                    if (exerciseContent) {
+                        exerciseContent.innerHTML = `
+                            <div style="text-align: center; color: #868E96;">
+                                <iconify-icon icon="mdi:book-open-variant" width="64" height="64" style="color: #DEE2E6; margin-bottom: 16px;"></iconify-icon>
+                                <p>请先导入练习内容或选择练习集</p>
+                            </div>
+                        `;
+                    }
+                    if (voiceInputArea) voiceInputArea.style.display = 'none';
+                    if (textInputArea) textInputArea.style.display = 'none';
+                    if (resultArea) resultArea.style.display = 'none';
+                    if (startPracticeBtn) startPracticeBtn.style.display = 'flex';
+                    if (submitAnswerBtn) submitAnswerBtn.style.display = 'none';
+                    if (nextExerciseBtn) nextExerciseBtn.style.display = 'none';
+                    currentExerciseItem = null;
+                }
+                
+                // 修复结束，添加调试功能
+                window.debugCustomExercise = function() {
+                    console.log('🔍 自定义练习模块调试信息:');
+                    console.log('  当前练习集:', currentExerciseSet);
+                    console.log('  当前练习项目:', currentExerciseItem);
+                    console.log('  当前模式:', currentPracticeMode);
+                    console.log('  DOM元素检查:', {
+                        exerciseSetSelect: !!exerciseSetSelect,
+                        importTextBtn: !!importTextBtn,
+                        startPracticeBtn: !!startPracticeBtn,
+                        exerciseContent: !!exerciseContent,
+                        voiceInputArea: !!voiceInputArea,
+                        textInputArea: !!textInputArea
+                    });
+                    
+                    // 试着重新加载练习集
+                    console.log('🔄 尝试重新加载练习集...');
+                    loadExerciseSets().then(() => {
+                        console.log('✅ 重新加载完成');
+                    }).catch(err => {
+                        console.error('❌ 重新加载失败:', err);
+                    });
+                };
+                
+                // 提供快捷测试方法
+                window.testCustomExerciseImport = function() {
+                    const testContent = `Hello world
+This is a test sentence
+你好|世界
+Hello|World`;
+                    
+                    if (importTextArea) {
+                        importTextArea.value = testContent;
+                        console.log('✅ 已填入测试内容');
+                    }
+                    
+                    if (exerciseNameInput) {
+                        exerciseNameInput.value = '测试练习集_' + new Date().getTime();
+                        console.log('✅ 已填入测试名称');
+                    }
+                    
+                    console.log('📝 现在可以点击"导入文本创建练习集"按钮进行测试');
+                };
+                
+                console.log('✅ 自定义练习模块初始化完成');
+                console.log('🐠 调试提示: 在控制台输入 debugCustomExercise() 查看详细信息');
+                console.log('🐠 测试提示: 在控制台输入 testCustomExerciseImport() 自动填入测试数据');
+            })();
+
+            // 自定义练习模块增强功能
+            const customModule = document.getElementById('custom');
+            if (customModule) {
+                let currentExerciseId = null;
+                let currentItemId = null;
+                let customRecording = { mediaRecorder: null, chunks: [], audioBlob: null, isRecording: false };
+                let exerciseStartTime = null;
+                
+                // 模式切换
+                const modeBtns = customModule.querySelectorAll('[data-mode]');
+                const textImportArea = document.getElementById('text-import-area');
+                const practiceModeArea = document.getElementById('practice-mode-area');
+                
+                modeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        modeBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        const mode = btn.dataset.mode;
+                        
+                        if (mode === 'text') {
+                            textImportArea.style.display = 'block';
+                            practiceModeArea.style.display = 'none';
+                        } else if (mode === 'practice') {
+                            textImportArea.style.display = 'none';
+                            practiceModeArea.style.display = 'block';
+                            loadPracticeExercises(); // 加载练习集列表
+                        }
+                    });
+                });
+                
+                // 文本导入功能（已在上面实现，此处移除重复代码）
+
+                
+                // 练习功能
+                async function loadPracticeExercises() {
+                    try {
+                        const response = await axios.get('/api/exercise-sets');
+                        const exerciseSets = response.data.exercise_sets || [];
+                        const practiceSelect = document.getElementById('practice-exercise-select');
+                        
+                        if (practiceSelect) {
+                            practiceSelect.innerHTML = '<option value="">选择练习集...</option>';
+                            exerciseSets.forEach(set => {
+                                const option = document.createElement('option');
+                                option.value = set.id;
+                                option.textContent = `${set.name} (${set.stats?.total_items || 0}题)`;
+                                practiceSelect.appendChild(option);
+                                console.log(`添加练习集选项: ${set.name} (ID: ${set.id})`);
+                            });
+                            
+                            // 监听练习集选择变化
+                            practiceSelect.removeEventListener('change', updateProgressForSelectedExercise); // 避免重复绑定
+                            practiceSelect.addEventListener('change', updateProgressForSelectedExercise);
+                        }
+                    } catch (error) {
+                        console.error('加载练习选项失败:', error);
+                    }
+                }
+                
+                // 更新选中练习集的进度显示
+                async function updateProgressForSelectedExercise() {
+                    const practiceSelect = document.getElementById('practice-exercise-select');
+                    const exerciseId = practiceSelect?.value;
+                    
+                    if (!exerciseId) {
+                        // 清空进度显示
+                        document.getElementById('totalItems').textContent = '0';
+                        document.getElementById('completedItems').textContent = '0';
+                        document.getElementById('progressPercent').textContent = '0%';
+                        document.getElementById('progressFill').style.width = '0%';
+                        document.getElementById('avgScore').textContent = '--';
+                        return;
+                    }
+                    
+                    try {
+                        // 获取练习集详细信息
+                        const response = await axios.get(`/api/exercise-sets/${exerciseId}`);
+                        const exerciseSet = response.data;
+                        
+                        if (exerciseSet && exerciseSet.stats) {
+                            const stats = exerciseSet.stats;
+                            const totalItems = stats.total_items || 0;
+                            const completedItems = stats.completed_count || 0;
+                            const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                            const avgScore = stats.average_score || 0;
+                            
+                            // 更新显示
+                            document.getElementById('totalItems').textContent = totalItems;
+                            document.getElementById('completedItems').textContent = completedItems;
+                            document.getElementById('progressPercent').textContent = `${progressPercent}%`;
+                            document.getElementById('progressFill').style.width = `${progressPercent}%`;
+                            document.getElementById('avgScore').textContent = avgScore > 0 ? avgScore.toFixed(1) : '--';
+                        }
+                    } catch (error) {
+                        console.error('获取练习集统计信息失败:', error);
+                    }
+                }
+                
+                const startCustomPracticeBtn = document.getElementById('start-custom-practice-btn');
+                if (startCustomPracticeBtn) {
+                    startCustomPracticeBtn.addEventListener('click', async () => {
+                        const exerciseId = document.getElementById('practice-exercise-select')?.value;
+                        const practiceType = document.getElementById('practice-type-select')?.value || 'speech';
+                        const difficulty = document.getElementById('difficulty-select')?.value || '';
+                        
+                        if (!exerciseId) { alert('请选择练习集'); return; }
+                        
+                        try {
+                            exerciseStartTime = Date.now();
+                            
+                            console.log('🚀 发送请求到 /api/custom-exercise');
+                            console.log('📝 请求参数:', {
+                                exercise_id: exerciseId,
+                                mode: practiceType === 'phoneme' ? 'speech' : practiceType,
+                                difficulty: difficulty
+                            });
+                            
+                            const response = await axios.post('/api/custom-exercise', {
+                                exercise_id: exerciseId,
+                                mode: practiceType === 'phoneme' ? 'speech' : practiceType,
+                                difficulty: difficulty
+                            });
+                            
+                            console.log('📦 服务器响应:', response.data);
+                            
+                            if (response.data.error) {
+                                console.error('❌ 服务器返回错误:', response.data.error);
+                                alert(`练习获取失败: ${response.data.error}`);
+                                return;
+                            }
+                            
+                            // 检查是否有有效的练习内容
+                            const hasValidContent = (response.data.reference_text && response.data.reference_text.trim()) || 
+                                                   (response.data.chinese_sentence && response.data.chinese_sentence.trim());
+                            
+                            if (!hasValidContent) {
+                                console.error('❌ 没有找到有效的练习内容');
+                                alert('没有找到符合条件的练习项目，请检查练习集内容或尝试其他难度');
+                                return;
+                            }
+                            
+                            currentExerciseId = response.data.exercise_id || exerciseId;
+                            currentItemId = response.data.item_id;
+                            
+                            console.log('✅ 获取练习项目成功，开始显示...');
+                            displayCustomExercise(response.data, practiceType);
+                            
+                        } catch (error) {
+                            console.error('❌ 开始练习失败:', error);
+                            if (error.response) {
+                                console.error('错误响应:', error.response.data);
+                                alert(`开始练习失败: ${error.response.data.error || error.response.data.message || '服务器错误'}`);
+                            } else if (error.request) {
+                                alert('无法连接到服务器，请检查网络连接');
+                            } else {
+                                alert(`开始练习失败: ${error.message}`);
+                            }
+                        }
+                    });
+                }
+                
+                function displayCustomExercise(exerciseData, type) {
+                    const contentArea = document.getElementById('custom-exercise-content');
+                    const controlsArea = document.getElementById('custom-exercise-controls');
+                    const inputArea = document.getElementById('custom-input-area');
+                    
+                    console.log('📺 显示练习内容:', { type, exerciseData });
+                    
+                    if (!contentArea) {
+                        console.error('❌ 找不到内容显示区域');
+                        return;
+                    }
+                    
+                    if ((type === 'speech' || type === 'phoneme') && exerciseData.reference_text) {
+                        const exerciseTitle = type === 'phoneme' ? '🔊 请朗读以下内容（音素级评分）：' : '🎤 请朗读以下内容：';
+                        
+                        if (contentArea) {
+                            contentArea.innerHTML = `
+                                <div style="text-align: center;">
+                                    <p style="font-size: 1.2rem; margin-bottom: 16px; color: #495057;">${exerciseTitle}</p>
+                                    <p style="font-size: 1.5rem; font-weight: 500; color: #212529; line-height: 1.6; background: #F8F9FA; padding: 16px; border-radius: 8px; border-left: 4px solid #3A86FF;">${exerciseData.reference_text}</p>
+                                    ${type === 'phoneme' ? '<p style="font-size: 0.9rem; color: #868E96; margin-top: 8px;">音素级评分将提供详细的发音分析和改进建议</p>' : ''}
+                                    ${exerciseData.difficulty ? `<p style="font-size: 0.9rem; color: #868E96; margin-top: 8px;">难度: ${getDifficultyText(exerciseData.difficulty)}</p>` : ''}
+                                </div>
+                            `;
+                        }
+                        if (inputArea) inputArea.style.display = 'none';
+                        if (controlsArea) {
+                            controlsArea.innerHTML = `
+                                <button id="record-custom-btn" style="background: #3A86FF; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin: 5px;">🎤 开始录音</button>
+                                <button id="submit-custom-answer-btn" style="display: none; background: #52B788; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin: 5px;">📤 提交评分</button>
+                                <button id="next-exercise-btn" onclick="document.getElementById('start-custom-practice-btn').click()" style="display: none; background: #FFD166; color: #212529; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin: 5px;">➡️ 下一题</button>
+                            `;
+                        }
+                        setupSpeechRecording(type);
+                        
+                    } else if (type === 'grammar' && exerciseData.chinese_sentence) {
+                        if (contentArea) {
+                            contentArea.innerHTML = `
+                                <div style="text-align: center;">
+                                    <p style="font-size: 1.2rem; margin-bottom: 16px; color: #495057;">✏️ 请翻译以下中文：</p>
+                                    <p style="font-size: 1.5rem; font-weight: 500; color: #212529; line-height: 1.6; background: #F8F9FA; padding: 16px; border-radius: 8px; border-left: 4px solid #52B788;">${exerciseData.chinese_sentence}</p>
+                                    ${exerciseData.difficulty ? `<p style="font-size: 0.9rem; color: #868E96; margin-top: 8px;">难度: ${getDifficultyText(exerciseData.difficulty)}</p>` : ''}
+                                </div>
+                            `;
+                        }
+                        if (inputArea) {
+                            inputArea.style.display = 'block';
+                            const answerInput = document.getElementById('custom-answer-input');
+                            if (answerInput) {
+                                answerInput.value = '';
+                                answerInput.placeholder = '请在此输入您的英文翻译...';
+                            }
+                        }
+                        if (controlsArea) {
+                            controlsArea.innerHTML = `
+                                <button id="submit-custom-answer-btn" style="background: #3A86FF; color: white; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin: 5px;">📤 提交检测</button>
+                                <button id="next-exercise-btn" onclick="document.getElementById('start-custom-practice-btn').click()" style="display: none; background: #FFD166; color: #212529; padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; margin: 5px;">➡️ 下一题</button>
+                            `;
+                        }
+                        setupGrammarSubmission();
+                    } else {
+                        console.error('❌ 无效的练习数据:', { type, reference_text: exerciseData.reference_text, chinese_sentence: exerciseData.chinese_sentence });
+                        if (contentArea) {
+                            contentArea.innerHTML = `
+                                <div style="text-align: center; color: #E63946; padding: 20px;">
+                                    <iconify-icon icon="mdi:alert-circle" width="48" height="48" style="margin-bottom: 16px;"></iconify-icon>
+                                    <p>练习内容加载失败</p>
+                                    <p style="font-size: 0.9rem; color: #868E96; margin-top: 8px;">请检查练习集内容或尝试其他练习类型</p>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // 添加难度说明函数
+                    function getDifficultyText(difficulty) {
+                        const difficultyMap = {
+                            'easy': '简单 - 短句子，常用词汇',
+                            'medium': '中等 - 中等长度，正常难度',
+                            'hard': '困难 - 长句子，复杂语法'
+                        };
+                        return difficultyMap[difficulty] || difficulty || '未知';
+                    }
+                }
+                
+                function setupSpeechRecording(exerciseType = 'speech') {
+                    const recordBtn = document.getElementById('record-custom-btn');
+                    const submitBtn = document.getElementById('submit-custom-answer-btn');
+                    
+                    if (recordBtn) {
+                        recordBtn.addEventListener('click', async () => {
+                            if (!customRecording.isRecording) {
+                                try {
+                                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                    customRecording.chunks = [];
+                                    customRecording.mediaRecorder = new MediaRecorder(stream);
+                                    
+                                    customRecording.mediaRecorder.ondataavailable = (e) => {
+                                        if (e.data.size > 0) customRecording.chunks.push(e.data);
+                                    };
+                                    
+                                    customRecording.mediaRecorder.onstop = () => {
+                                        customRecording.audioBlob = new Blob(customRecording.chunks, { type: 'audio/webm' });
+                                        stream.getTracks().forEach(t => t.stop());
+                                        customRecording.isRecording = false;
+                                        recordBtn.textContent = '重新录音';
+                                        recordBtn.style.background = '#868E96';
+                                        if (submitBtn) submitBtn.style.display = 'inline-block';
+                                    };
+                                    
+                                    customRecording.mediaRecorder.start();
+                                    customRecording.isRecording = true;
+                                    recordBtn.textContent = '停止录音';
+                                    recordBtn.style.background = '#E63946';
+                                    
+                                } catch (error) {
+                                    alert('无法访问麦克风，请检查权限设置');
+                                }
+                            } else {
+                                if (customRecording.mediaRecorder && customRecording.mediaRecorder.state !== 'inactive') {
+                                    customRecording.mediaRecorder.stop();
+                                }
+                            }
+                        });
+                    }
+                    
+                    if (submitBtn) {
+                        submitBtn.addEventListener('click', async () => {
+                            if (!customRecording.audioBlob) { alert('请先录音'); return; }
+                            
+                            const referenceText = document.querySelector('#custom-exercise-content p:nth-child(2)')?.textContent;
+                            if (!referenceText) { alert('参考文本缺失'); return; }
+                            
+                            try {
+                                submitBtn.textContent = '评分中...';
+                                submitBtn.disabled = true;
+                                
+                                const formData = new FormData();
+                                formData.append('reference_text', referenceText);
+                                formData.append('audio_file', customRecording.audioBlob, 'custom_recording.webm');
+                                
+                                // 根据练习类型选择不同的API端点
+                                const apiEndpoint = exerciseType === 'phoneme' ? '/api/score-pronunciation-detailed' : '/api/score-pronunciation';
+                                console.log(`使用API端点: ${apiEndpoint}`);
+                                
+                                const response = await axios.post(apiEndpoint, formData);
+                                let score, detailedResult = null;
+                                
+                                if (exerciseType === 'phoneme' && response.data.overall_score !== undefined) {
+                                    // 音素级评分结果
+                                    score = parseFloat(response.data.overall_score) || 0;
+                                    detailedResult = response.data;
+                                } else {
+                                    // 普通评分结果
+                                    score = parseFloat(response.data.score) || 0;
+                                }
+                                
+                                // 记录练习结果
+                                if (currentExerciseId && currentItemId) {
+                                    const timeSpent = exerciseStartTime ? (Date.now() - exerciseStartTime) / 1000 : 0;
+                                    await axios.post('/api/exercise-results', {
+                                        exercise_id: currentExerciseId,
+                                        item_id: currentItemId,
+                                        score: score,
+                                        time_spent: timeSpent
+                                    });
+                                    
+                                    // 更新进度显示
+                                    await updateProgressForSelectedExercise();
+                                }
+                                
+                                showExerciseResult(exerciseType, score, null, detailedResult);
+                                
+                            } catch (error) {
+                                console.error('评分失败:', error);
+                                
+                                // 提供更详细的错误信息
+                                let errorMessage = '评分失败，请重试';
+                                if (error.response) {
+                                    // 服务器返回了错误响应
+                                    if (error.response.status === 500 && error.response.data && error.response.data.error) {
+                                        errorMessage = `评分错误: ${error.response.data.error}`;
+                                    } else {
+                                        errorMessage = `服务器错误 (${error.response.status}): ${error.response.statusText}`;
+                                    }
+                                } else if (error.request) {
+                                    // 网络连接问题
+                                    errorMessage = '网络连接失败，请检查网络连接';
+                                }
+                                
+                                // 尽管有错误，但如果返回了部分数据，仍然尝试显示结果
+                                if (error.response && error.response.data && error.response.data.score) {
+                                    const partialScore = parseFloat(error.response.data.score) || 0;
+                                    console.log('检测到部分评分数据，将显示结果:', partialScore);
+                                    showExerciseResult(exerciseType, partialScore, null, null);
+                                } else {
+                                    alert(errorMessage);
+                                }
+                            } finally {
+                                submitBtn.textContent = '提交评分';
+                                submitBtn.disabled = false;
+                            }
+                        });
+                    }
+                }
+                
+                function setupGrammarSubmission() {
+                    const submitBtn = document.getElementById('submit-custom-answer-btn');
+                    if (!submitBtn) return;
+                    
+                    submitBtn.addEventListener('click', async () => {
+                        const answerInput = document.getElementById('custom-answer-input');
+                        const answer = answerInput?.value?.trim();
+                        
+                        if (!answer) { alert('请输入您的翻译'); return; }
+                        
+                        try {
+                            submitBtn.textContent = '检测中...';
+                            submitBtn.disabled = true;
+                            
+                            const formData = new FormData();
+                            formData.append('translated_text', answer);
+                            
+                            const response = await axios.post('/api/check-grammar', formData);
+                            const result = response.data.result;
+                            
+                            let score = result.status === 'success' ? 100 : Math.max(0, 100 - (result.error_count * 10));
+                            
+                            // 记录练习结果
+                            if (currentExerciseId && currentItemId) {
+                                const timeSpent = exerciseStartTime ? (Date.now() - exerciseStartTime) / 1000 : 0;
+                                await axios.post('/api/exercise-results', {
+                                    exercise_id: currentExerciseId,
+                                    item_id: currentItemId,
+                                    score: score,
+                                    time_spent: timeSpent
+                                });
+                                
+                                // 更新进度显示
+                                await updateProgressForSelectedExercise();
+                            }
+                            
+                            showExerciseResult('grammar', score, result);
+                            
+                        } catch (error) {
+                            alert('语法检测失败，请重试');
+                        } finally {
+                            submitBtn.textContent = '提交检测';
+                            submitBtn.disabled = false;
+                        }
+                    });
+                }
+                
+                function showExerciseResult(type, score, grammarResult = null, detailedResult = null) {
+                    const resultArea = document.getElementById('custom-exercise-result');
+                    const nextBtn = document.getElementById('next-exercise-btn');
+                    
+                    if (resultArea) {
+                        let html = `
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <h4 style="margin: 0 0 8px 0; color: #212529;">练习完成！</h4>
+                                <div style="font-size: 2rem; font-weight: 800; color: ${score >= 80 ? '#52B788' : score >= 60 ? '#3A86FF' : '#E63946'}; margin: 8px 0;">${score.toFixed(1)}</div>
+                                <div style="color: #495057;">${score >= 90 ? '优秀' : score >= 75 ? '良好' : score >= 60 ? '及格' : '需要改进'}</div>
+                            </div>
+                        `;
+                        
+                        // 显示语法检测结果
+                        if (type === 'grammar' && grammarResult && grammarResult.status !== 'success') {
+                            html += '<div style="text-align: left; font-size: 0.9rem;">';
+                            html += `<p style="color: #E63946; margin-bottom: 8px;">❌ 检测到 ${grammarResult.error_count} 处语法问题：</p>`;
+                            grammarResult.errors.slice(0, 3).forEach((error, i) => {
+                                html += `<div style="margin-bottom: 4px; padding: 8px; background: #FFF5F5; border-radius: 4px;"><strong>错误 ${i+1}:</strong> ${error.message}</div>`;
+                            });
+                            html += '</div>';
+                        }
+                        
+                        // 显示音素级详细结果
+                        if (detailedResult && (type === 'phoneme' || type === 'speech')) {
+                            // 检查是否有详细的音素分析数据
+                            if (detailedResult.phoneme_scores || detailedResult.word_scores || detailedResult.improvement_suggestions) {
+                                html += displayDetailedPronunciationResults(detailedResult);
+                            } else {
+                                // 如果没有详细数据，显示简化版本
+                                html += `
+                                    <div style="margin-top: 16px; padding: 12px; background: #FFF3CD; border-left: 4px solid #FFC107; border-radius: 4px;">
+                                        <p style="margin: 0; color: #856404; font-weight: 600;">⚠️ 简化评分模式</p>
+                                        <p style="margin: 4px 0 0 0; color: #856404; font-size: 0.9rem;">当前使用的是简化评分，无法提供详细的音素分析。请检查系统配置或尝试在首页使用详细评分模式。</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        // 添加查看时间提示和倒计时
+                        html += `
+                            <div id="resultViewTimer" style="margin-top: 20px; padding: 12px; background: #E9F1FF; border-radius: 6px; text-align: center;">
+                                <div style="color: #3A86FF; font-weight: 600; margin-bottom: 8px;">🕰️ 请仔细查看您的练习结果</div>
+                                <div style="color: #495057; font-size: 0.9rem;">“下一题”按钮将在 <span id="countdown" style="font-weight: 600; color: #E63946;">10</span> 秒后显示</div>
+                                <div style="margin-top: 8px;">
+                                    <button onclick="showNextButtonEarly()" style="background: #52B788; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem;">
+                                        立即进入下一题
+                                    </button>
+                                    <button onclick="extendViewTime()" style="background: #FFD166; color: #212529; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; margin-left: 8px;">
+                                        继续查看 (+10秒)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        resultArea.innerHTML = html;
+                        resultArea.style.display = 'block';
+                    }
+                    
+                    // 隐藏下一题按钮，并启动倒计时
+                    if (nextBtn) {
+                        nextBtn.style.display = 'none';
+                        startResultCountdown(nextBtn);
+                    }
+                }
+                
+                // 倒计时功能
+                let countdownTimer = null;
+                let countdownSeconds = 10;
+                
+                function startResultCountdown(nextBtn) {
+                    countdownSeconds = 10;
+                    updateCountdownDisplay();
+                    
+                    countdownTimer = setInterval(() => {
+                        countdownSeconds--;
+                        updateCountdownDisplay();
+                        
+                        if (countdownSeconds <= 0) {
+                            clearInterval(countdownTimer);
+                            showNextButton(nextBtn);
+                        }
+                    }, 1000);
+                }
+                
+                function updateCountdownDisplay() {
+                    const countdownElement = document.getElementById('countdown');
+                    if (countdownElement) {
+                        countdownElement.textContent = countdownSeconds;
+                        // 最后3秒变红色提醒
+                        if (countdownSeconds <= 3) {
+                            countdownElement.style.color = '#E63946';
+                            countdownElement.style.fontSize = '1.1rem';
+                        }
+                    }
+                }
+                
+                function showNextButton(nextBtn) {
+                    const timerElement = document.getElementById('resultViewTimer');
+                    if (timerElement) {
+                        timerElement.innerHTML = `
+                            <div style="color: #52B788; font-weight: 600;">✅ 结果查看完毕</div>
+                            <div style="color: #495057; font-size: 0.9rem; margin-top: 4px;">现在可以进入下一题了</div>
+                        `;
+                    }
+                    
+                    if (nextBtn) {
+                        nextBtn.style.display = 'inline-block';
+                        // 添加动画效果
+                        nextBtn.style.animation = 'fadeIn 0.5s ease';
+                    }
+                }
+                
+                // 提前显示下一题按钮
+                window.showNextButtonEarly = function() {
+                    if (countdownTimer) {
+                        clearInterval(countdownTimer);
+                        countdownTimer = null;
+                    }
+                    
+                    const nextBtn = document.getElementById('next-exercise-btn');
+                    showNextButton(nextBtn);
+                };
+                
+                // 延长查看时间
+                window.extendViewTime = function() {
+                    if (countdownTimer) {
+                        clearInterval(countdownTimer);
+                    }
+                    
+                    countdownSeconds += 10;
+                    const nextBtn = document.getElementById('next-exercise-btn');
+                    startResultCountdown(nextBtn);
+                    
+                    // 显示延长提示
+                    const timerElement = document.getElementById('resultViewTimer');
+                    if (timerElement) {
+                        const existingContent = timerElement.innerHTML;
+                        timerElement.innerHTML = `
+                            <div style="color: #52B788; font-weight: 600; margin-bottom: 8px;">✅ 已延长10秒查看时间</div>
+                            <div style="color: #495057; font-size: 0.9rem;">“下一题”按钮将在 <span id="countdown" style="font-weight: 600; color: #E63946;">${countdownSeconds}</span> 秒后显示</div>
+                            <div style="margin-top: 8px;">
+                                <button onclick="showNextButtonEarly()" style="background: #52B788; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem;">
+                                    立即进入下一题
+                                </button>
+                                <button onclick="extendViewTime()" style="background: #FFD166; color: #212529; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; margin-left: 8px;">
+                                    再延长10秒
+                                </button>
+                            </div>
+                        `;
+                    }
+                };
+                
+                // 显示详细发音结果的函数
+                function displayDetailedPronunciationResults(result) {
+                    let detailedHTML = `
+                        <div style="margin-top: 20px; padding: 16px; background: #F8F9FA; border-radius: 8px; border: 1px solid #E9ECEF; text-align: left;">
+                            <h5 style="margin-bottom: 16px; color: #495057; font-size: 1.1rem;">🔍 详细分析结果</h5>
+                    `;
+                    
+                    // 显示需要改进的单词
+                    if (result.word_scores && result.word_scores.length > 0) {
+                        const wordsNeedingImprovement = result.word_scores.filter(ws => ws.needs_improvement);
+                        
+                        if (wordsNeedingImprovement.length > 0) {
+                            detailedHTML += `
+                                <div style="margin-bottom: 16px; padding: 12px; background: #FFF5F5; border-left: 4px solid #E63946; border-radius: 4px;">
+                                    <h6 style="margin-bottom: 12px; color: #E63946; font-size: 1rem;">🎯 需要重点改进的单词:</h6>
+                            `;
+                            
+                            wordsNeedingImprovement.forEach(wordInfo => {
+                                const qualityColor = {
+                                    'excellent': '#52B788',
+                                    'good': '#3A86FF', 
+                                    'fair': '#FFD166',
+                                    'poor': '#E63946',
+                                    'unknown': '#868E96'
+                                }[wordInfo.quality] || '#868E96';
+                                
+                                const qualityText = {
+                                    'excellent': '优秃',
+                                    'good': '良好', 
+                                    'fair': '一般',
+                                    'poor': '较差',
+                                    'unknown': '未知'
+                                }[wordInfo.quality] || '未知';
+                                
+                                detailedHTML += `
+                                    <div style="margin-bottom: 12px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #E9ECEF;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                            <strong style="color: #495057; font-size: 1rem;">'${wordInfo.word}'</strong>
+                                            <span style="
+                                                padding: 3px 8px; 
+                                                background: ${qualityColor}; 
+                                                color: white; 
+                                                border-radius: 12px; 
+                                                font-size: 0.8rem;
+                                                font-weight: 600;
+                                            ">${wordInfo.score.toFixed(1)}分 (${qualityText})</span>
+                                        </div>
+                                `;
+                                
+                                // 显示具体建议
+                                if (wordInfo.suggestions && wordInfo.suggestions.length > 0) {
+                                    detailedHTML += `
+                                        <div style="margin-left: 16px;">
+                                            <p style="font-size: 0.9rem; color: #495057; margin-bottom: 4px; font-weight: 600;">💡 改进建议:</p>
+                                            <ul style="margin-left: 16px; margin-bottom: 8px;">
+                                    `;
+                                    wordInfo.suggestions.forEach(suggestion => {
+                                        detailedHTML += `<li style="color: #495057; font-size: 0.85rem; margin-bottom: 2px;">${suggestion}</li>`;
+                                    });
+                                    detailedHTML += `</ul>`;
+                                }
+                                
+                                detailedHTML += `</div>`;
+                            });
+                            
+                            detailedHTML += `</div>`;
+                        }
+                        
+                        // 显示表现良好的单词
+                        const goodWords = result.word_scores.filter(ws => !ws.needs_improvement && ws.score > 0);
+                        if (goodWords.length > 0) {
+                            detailedHTML += `
+                                <div style="margin-bottom: 16px; padding: 12px; background: #F0F8F0; border-left: 4px solid #52B788; border-radius: 4px;">
+                                    <h6 style="margin-bottom: 8px; color: #52B788; font-size: 0.95rem;">🌟 发音良好的单词:</h6>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            `;
+                            goodWords.forEach(wordInfo => {
+                                detailedHTML += `
+                                    <span style="
+                                        padding: 4px 8px;
+                                        background: #52B788;
+                                        color: white;
+                                        border-radius: 12px;
+                                        font-size: 0.85rem;
+                                        font-weight: 500;
+                                    ">'${wordInfo.word}' (${wordInfo.score.toFixed(1)})</span>
+                                `;
+                            });
+                            detailedHTML += `
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // 显示改进建议
+                    if (result.improvement_suggestions && result.improvement_suggestions.length > 0) {
+                        detailedHTML += `
+                            <div style="margin-bottom: 16px; padding: 12px; background: #F0F4FF; border-left: 4px solid #3A86FF; border-radius: 4px;">
+                                <h6 style="margin-bottom: 8px; color: #3A86FF; font-weight: 600;">💡 综合改进建议:</h6>
+                                <div style="color: #495057; line-height: 1.5;">
+                        `;
+                        result.improvement_suggestions.forEach(suggestion => {
+                            detailedHTML += `<p style="margin: 4px 0; padding-left: 12px;">• ${suggestion}</p>`;
+                        });
+                        detailedHTML += `</div></div>`;
+                    }
+                    
+                    // 显示音素级评分（折叠显示）
+                    if (result.phoneme_scores && result.phoneme_scores.length > 0) {
+                        detailedHTML += `
+                            <details style="margin-bottom: 16px;">
+                                <summary style="cursor: pointer; color: #3A86FF; font-weight: 600; margin-bottom: 8px;">🔊 查看音素分析 (${result.phoneme_scores.length}个音素)</summary>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: white; border-radius: 4px;">
+                        `;
+                        
+                        result.phoneme_scores.forEach(ps => {
+                            let bgColor = '#52B788';  // 绿色（优秀）
+                            if (ps.quality === 'good') bgColor = '#3A86FF';      // 蓝色（良好）
+                            else if (ps.quality === 'fair') bgColor = '#FFD166';  // 黄色（一般）
+                            else if (ps.quality === 'poor') bgColor = '#E63946';  // 红色（较差）
+                            
+                            detailedHTML += `
+                                <span style="
+                                    display: inline-block; 
+                                    padding: 4px 8px; 
+                                    margin: 2px; 
+                                    background: ${bgColor};
+                                    color: white; 
+                                    border-radius: 4px; 
+                                    font-size: 0.9rem;
+                                    cursor: pointer;
+                                " title="评分: ${ps.score.toFixed(1)}, 时间: ${ps.start_time.toFixed(2)}s-${ps.end_time.toFixed(2)}s">
+                                    ${ps.phoneme} (${ps.score.toFixed(0)})
+                                </span>
+                            `;
+                        });
+                        
+                        detailedHTML += `
+                                </div>
+                                <p style="font-size: 0.8rem; color: #868E96; margin-top: 8px;">
+                                    颜色说明: <span style="color: #52B788;">█ 优秀</span> 
+                                    <span style="color: #3A86FF;">█ 良好</span> 
+                                    <span style="color: #FFD166;">█ 一般</span> 
+                                    <span style="color: #E63946;">█ 需改进</span>
+                                </p>
+                            </details>
+                        `;
+                    }
+                    
+                    detailedHTML += `</div>`;
+                    return detailedHTML;
+                }
+            }
+            
+            // 导入文本按钮事件已在前面的代码块中处理，避免重复绑定
+        });
+        
+        // 用户认证状态管理
+        function checkAuthStatus() {
+            const token = localStorage.getItem('auth_token');
+            const userInfo = localStorage.getItem('user_info');
+            const userInfoElement = document.getElementById('user-info');
+            const guestSection = document.getElementById('guest-info');
+            const usernameDisplay = document.getElementById('username-display');
+            
+            if (token && userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    // 显示用户信息
+                    if (userInfoElement) {
+                        userInfoElement.style.display = 'flex';
+                        if (usernameDisplay) {
+                            usernameDisplay.textContent = user.username || user.full_name || '用户';
+                        }
+                    }
+                    // 隐藏登录按钮
+                    if (guestSection) {
+                        guestSection.style.display = 'none';
+                    }
+                    
+                    // 设置axios默认header
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    
+                    // 确保cookie也设置了token（为了服务端验证）
+                    document.cookie = `auth_token=${token}; path=/; max-age=${7*24*60*60}`; // 7天有效期
+                    
+                    // 验证token是否有效
+                    axios.get('/api/user/profile')
+                        .catch(error => {
+                            // Token无效，清除登录状态
+                            handleLogout();
+                        });
+                        
+                } catch (error) {
+                    console.error('解析用户信息失败:', error);
+                    handleLogout();
+                }
+            } else {
+                // 显示登录按钮
+                if (guestSection) {
+                    guestSection.style.display = 'block';
+                }
+                // 隐藏用户信息
+                if (userInfoElement) {
+                    userInfoElement.style.display = 'none';
+                }
+                // 清除axios header
+                delete axios.defaults.headers.common['Authorization'];
+            }
+        }
+        
+        // 登出处理
+        function handleLogout() {
+            // 调用登出API
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                axios.post('/api/logout', {}, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).catch(error => {
+                    console.log('登出API调用失败:', error);
+                });
+            }
+            
+            // 清除本地存储
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_info');
+            
+            // 清除cookie
+            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            
+            // 清除axios header
+            delete axios.defaults.headers.common['Authorization'];
+            
+            // 显示提示并跳转到登录页面
+            alert('已成功登出');
+            
+            // 跳转到登录页面
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 500);
+        }
+        
+        // 页面加载时检查认证状态
+        window.addEventListener('load', function() {
+            checkAuthStatus();
+            
+            // 为登出按钮添加事件监听器
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+        });
+        
+        // 监听localStorage变化（其他标签页登录/登出）
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'auth_token' || event.key === 'user_info') {
+                checkAuthStatus();
+            }
+        });
+    </script>
+
+</body>
+</html>
