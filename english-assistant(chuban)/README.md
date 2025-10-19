@@ -434,7 +434,7 @@ logging.basicConfig(
 
 ## 📞 联系方式
 
-- 项目维护者：鸭子先生团队
+- 项目维护者：鸭子先生
 - 问题反馈：通过GitHub Issues
 - 邮箱：[1977358865@qq.com]
 
@@ -471,5 +471,6 @@ logging.basicConfig(
 - 简单Web界面
 
 ---
+
 
 *最后更新：2025年10月12日*
